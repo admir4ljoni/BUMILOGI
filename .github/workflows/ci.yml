@@ -1,0 +1,25 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16-alpine
+        env: { POSTGRES_USER: bumilogi, POSTGRES_PASSWORD: dev, POSTGRES_DB: bumilogi }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U bumilogi" --health-interval 2s --health-retries 15
+    env:
+      DATABASE_URL: postgres://bumilogi:dev@localhost:5432/bumilogi?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: api/go.mod, cache-dependency-path: api/go.sum }
+      - run: go vet ./... && go test ./...
+        working-directory: api
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version-file: web/package.json }
+      - run: bun install --frozen-lockfile && bun run lint && bun run build
+        working-directory: web
+      # ponytail: add `bun test` once web/lib/board.test.ts exists (bun test fails with no test files)
