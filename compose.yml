@@ -1,0 +1,8 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment: { POSTGRES_USER: bumilogi, POSTGRES_PASSWORD: dev, POSTGRES_DB: bumilogi }
+    ports: ["127.0.0.1:5432:5432"]          # localhost only
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD", "pg_isready", "-U", "bumilogi"], interval: 2s }
+volumes: { pgdata: {} }
