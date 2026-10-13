@@ -3,3 +3,5 @@ claude
 docs
 TASKS.md
 .env
+api/tmp/
+api/data/
