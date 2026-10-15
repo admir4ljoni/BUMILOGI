@@ -282,3 +282,104 @@ func TestRateLimitRealIP(t *testing.T) {
 		t.Fatalf("spoofed X-Real-IP from untrusted peer: want 429, got %d", c)
 	}
 }
+
+func TestTokenPurposeMismatch(t *testing.T) {
+	app := newApp(testDB, "")
+	email := newEmail()
+	call(t, app, "POST", "/api/v1/auth/register", fiber.Map{"full_name": "Siti", "email": email, "password": "rahasia123"})
+	verify := nextMailToken(t)
+	if r := call(t, app, "POST", "/api/v1/auth/reset-password", fiber.Map{"token": verify, "password": "attacker12"}); r.code != 400 {
+		t.Fatalf("verify token at reset: want 400, got %d", r.code)
+	}
+	if r := call(t, app, "POST", "/api/v1/auth/verify-email", fiber.Map{"token": verify}); r.code != 200 {
+		t.Fatalf("verify token must be untouched by the failed reset: got %d", r.code)
+	}
+}
+
+// Two simultaneous resets with one token: exactly one may win.
+func TestResetTokenConcurrentUse(t *testing.T) {
+	app := newApp(testDB, "")
+	email := newEmail()
+	signup(t, app, email, "rahasia123")
+	call(t, app, "POST", "/api/v1/auth/forgot-password", fiber.Map{"email": email})
+	token := nextMailToken(t)
+
+	codes := make(chan int, 2)
+	for _, pw := range []string{"pertama123", "kedua12345"} {
+		go func() {
+			codes <- call(t, app, "POST", "/api/v1/auth/reset-password", fiber.Map{"token": token, "password": pw}).code
+		}()
+	}
+	got := map[int]int{}
+	got[<-codes]++
+	got[<-codes]++
+	if got[200] != 1 || got[400] != 1 {
+		t.Fatalf("want one 200 and one 400, got %v", got)
+	}
+}
+
+func TestAccessTokenRejected(t *testing.T) {
+	app := newApp(testDB, "")
+	bearer := func(tok string) func(*http.Request) {
+		return func(r *http.Request) { r.Header.Set("Authorization", "Bearer "+tok) }
+	}
+	// A real user, so a 401 can only come from the token check, not "user not found".
+	uid := signup(t, app, newEmail(), "rahasia123").body["data"].(map[string]any)["user"].(map[string]any)["id"].(string)
+	valid, _ := signToken("access", uid, "customer", 0, time.Minute)
+	if r := call(t, app, "GET", "/api/v1/auth/me", nil, bearer(valid)); r.code != 200 {
+		t.Fatalf("control: valid token want 200, got %d", r.code)
+	}
+	expired, _ := signToken("access", uid, "customer", 0, -time.Minute)
+	key := jwtKey
+	jwtKey = []byte("someone-elses-key")
+	forged, _ := signToken("access", uid, "manager", 0, time.Minute)
+	jwtKey = key
+	for name, tok := range map[string]string{"expired": expired, "wrong key": forged, "garbage": "abc.def.ghi"} {
+		if r := call(t, app, "GET", "/api/v1/auth/me", nil, bearer(tok)); r.code != 401 {
+			t.Fatalf("%s token: want 401, got %d", name, r.code)
+		}
+	}
+}
+
+func TestLogoutClearsCookies(t *testing.T) {
+	app := newApp(testDB, "")
+	session := signup(t, app, newEmail(), "rahasia123")
+	r := call(t, app, "POST", "/api/v1/auth/logout", "", withCookies(session.cookies), func(r *http.Request) { r.Header.Del("Content-Type") })
+	for _, name := range []string{"access_token", "refresh_token"} {
+		c := cookie(r, name)
+		if c == nil || c.Value != "" || c.Expires.After(time.Now()) {
+			t.Fatalf("%s not cleared: %v", name, c)
+		}
+	}
+}
+
+func TestRegisterValidation(t *testing.T) {
+	app := newApp(testDB, "")
+	ok := fiber.Map{"full_name": "Siti", "email": "valid@test.id", "password": "rahasia123", "phone_number": "081234567890"}
+	with := func(k string, v any) fiber.Map {
+		m := fiber.Map{}
+		for kk, vv := range ok {
+			m[kk] = vv
+		}
+		m[k] = v
+		return m
+	}
+	cases := map[string]fiber.Map{
+		"not an email":       with("email", "bukan-email"),
+		"display-name email": with("email", "Siti <siti@test.id>"),
+		"empty name":         with("full_name", "   "),
+		"name > 100":         with("full_name", strings.Repeat("a", 101)),
+		"phone > 20":         with("phone_number", strings.Repeat("1", 21)),
+		"password 7 bytes":   with("password", "1234567"),
+		"password 73 bytes":  with("password", strings.Repeat("a", 73)),
+	}
+	for name, body := range cases {
+		if r := call(t, app, "POST", "/api/v1/auth/register", body); r.code != 400 {
+			t.Errorf("%s: want 400, got %d %v", name, r.code, r.body)
+		}
+	}
+	if r := call(t, app, "POST", "/api/v1/auth/reset-password", fiber.Map{"token": "x", "password": "short"}); r.code != 400 {
+		t.Errorf("reset with short password: want 400, got %d", r.code)
+	}
+	noMail(t)
+}
