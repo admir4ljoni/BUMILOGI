@@ -66,7 +66,7 @@
 html,
 body {
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip; /* not hidden: that makes body a scroll container and breaks position: sticky */
 }
 
 body {
@@ -154,6 +154,253 @@ a {
 .mono {
   font-family: var(--font-mono);
   font-weight: 500;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-full);
+  color: var(--ink);
+  transition: background var(--fast) var(--ease);
+}
+.icon-btn:hover {
+  background: var(--sand);
+}
+
+/* Forms (DESIGN.md: input, label above in body-sm 600, pink-deep errors with an icon) */
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.field-hint {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+.input {
+  width: 100%;
+  background: var(--white);
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  font: 400 16px/1.4 var(--font-body); /* 16px stops iOS zoom on focus */
+  transition: border-color var(--fast) var(--ease);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+.input:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.input:user-invalid {
+  border-color: var(--pink-deep);
+}
+.form-note {
+  display: flex;
+  gap: var(--s-sm);
+  align-items: baseline;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--paper);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.form-note > span {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  font-weight: 700;
+  font-size: 12px;
+}
+.form-error {
+  color: var(--pink-deep);
+  border: 1.5px solid var(--pink-deep);
+}
+.form-error > span {
+  background: var(--pink-deep);
+  color: var(--white);
+}
+.form-success {
+  color: var(--green-deep);
+  border: 1.5px solid var(--green-deep);
+}
+.form-success > span {
+  background: var(--green);
+  color: var(--ink);
+}
+
+/* Auth: board scene + form card. Mobile stacks scene first (DESIGN.md §4). */
+.auth {
+  display: grid;
+  gap: var(--s-lg);
+  padding-block: var(--s-lg) var(--s-2xl);
+}
+.auth-card {
+  position: relative;
+  z-index: 1;
+  background: var(--white);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--s-lg);
+}
+.auth-eyebrow {
+  margin: 0 0 var(--s-sm);
+  color: var(--orange-deep);
+}
+.auth-title {
+  font-size: clamp(28px, 4vw, 36px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.auth-sub {
+  margin: var(--s-sm) 0 var(--s-lg);
+  color: var(--ink-muted);
+  max-width: 60ch;
+}
+.auth-form {
+  display: grid;
+  gap: var(--s-md);
+}
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s-sm) var(--s-md);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+.auth-links a {
+  color: var(--orange-deep);
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.auth-scene {
+  visibility: hidden; /* GSAP reveals it, so the intro has no flash of the final state */
+  position: relative;
+  height: min(86vw, 400px);
+}
+.scene-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.scene-blob {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 46% 54% 50% 50% / 52% 44% 56% 48%;
+  opacity: 0.45;
+}
+.scene-board {
+  position: absolute;
+  inset: 4% 3%;
+  border-radius: var(--r-xl);
+  background: var(--paper) radial-gradient(var(--line) 1.5px, transparent 1.6px) 0 0 / 22px 22px;
+  box-shadow: var(--shadow-card);
+}
+.scene-svg {
+  position: absolute;
+  inset: 7%;
+  width: 86%;
+  height: 86%;
+  overflow: visible;
+}
+.pawn,
+.confetti {
+  visibility: hidden;
+}
+.loose {
+  position: absolute;
+}
+.loose-tile {
+  width: clamp(52px, 12vw, 76px);
+  aspect-ratio: 1;
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-float);
+}
+.loose-chip {
+  width: auto;
+  aspect-ratio: auto;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  background: var(--green);
+  font: 600 12px/1.2 var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (min-width: 641px) {
+  .auth-card {
+    padding: var(--s-xl);
+  }
+}
+@media (min-width: 900px) {
+  .auth {
+    grid-template-columns: 7fr 5fr;
+    gap: var(--s-2xl);
+    align-items: start;
+    padding-block: var(--s-xl) var(--s-3xl);
+  }
+  .auth-scene {
+    position: sticky;
+    top: 112px;
+    height: min(calc(100vh - 150px), 620px);
+  }
+  .auth-card {
+    margin-top: var(--s-xl);
+  }
+}
+
+/* Dashboard panel (account) */
+.panel {
+  max-width: 560px;
+  background: var(--white);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--s-xl) var(--s-lg);
+  display: grid;
+  gap: var(--s-md);
+  justify-items: start;
+}
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-sm) var(--s-lg);
+  margin: 0;
+  font-size: 14px;
+}
+.facts dt {
+  color: var(--ink-muted);
+}
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 @media (prefers-reduced-motion: reduce) {

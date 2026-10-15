@@ -46,6 +46,31 @@ CI (`.github/workflows/ci.yml`) runs exactly: `go vet` + `go test` against a `po
 - **Commit after every change:** make one focused commit per logical change, not one batch at the end. Write an imperative subject of 72 characters or fewer that says what changed (e.g. `Add email verify endpoint`, not `update`). Add a body explaining *why* when that isn't obvious.
 - **No AI attribution:** don't add `Co-Authored-By: Claude` or any other Claude/AI attribution lines to commits or PRs.
 
+## Before any prod or staging deploy
+
+**Remind the user of this whole checklist whenever they talk about deploying, pushing to prod/staging, setting up the VPS, or starting task 14.** Tick items off here as they're done; delete the section when it's empty.
+
+From slice 2 (email auth):
+- [ ] **Prod env:**
+  - `JWT_SECRET`: fresh `openssl rand -base64 48`, never the dev value (otherwise anyone can forge sessions).
+  - `APP_URL=https://<domain>`: sets mail links and the cookie `Secure` flag.
+  - `TRUSTED_PROXIES=<nginx docker CIDR>`: if empty, every user shares one rate-limit quota (5 bad logins locks everyone out).
+  - `API_URL=http://api:8080` on the web container: `proxy.ts` and `/akun` need it.
+- [ ] **Email:**
+  - Brevo/Resend account, verified sender domain, SPF + DKIM + DMARC records.
+  - Port 587 (`net/smtp` can't do implicit-TLS 465).
+  - Send one real mail first: the SMTP path has only ever logged to stdout.
+- [ ] **Nginx:**
+  - `/api/` straight to Go (the Next rewrite is dev only).
+  - `proxy_set_header X-Real-IP $remote_addr;` (replace, never pass the client's header through).
+  - HTTPS via certbot.
+  - No caching of `/api/` responses.
+- [ ] **Verify live:**
+  - Real Android from a WhatsApp link: register → verify mail → `/akun` → reopen browser, still logged in.
+  - 6 bad logins → 429 while another network can still log in.
+  - Server clock NTP-synced.
+- [ ] **Don't copy the dev DB** (full of test users). Prod starts empty; migrations build it.
+
 ## Conventions
 
 - Deliberate shortcuts are marked with `ponytail:` comments that name their limit and the upgrade path.

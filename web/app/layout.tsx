@@ -34,9 +34,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="label" style={{ textDecoration: "none" }}>
               BUMILOGI
             </Link>
-            <Link href="/" className="btn btn-primary" style={{ padding: "10px 20px" }}>
-              Pre-order
-            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: "var(--s-sm)" }}>
+              <Link href="/akun" className="icon-btn" aria-label="Akun saya">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+                </svg>
+              </Link>
+              <Link href="/" className="btn btn-primary" style={{ padding: "10px 20px" }}>
+                Pre-order
+              </Link>
+            </div>
           </nav>
         </header>
         <main>{children}</main>
