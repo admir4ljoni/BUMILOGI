@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { MotionPathPlugin } from "gsap/MotionPathPlugin";
+import { Glyph, type Cmd } from "./glyph";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, DrawSVGPlugin, MotionPathPlugin);
 
@@ -35,7 +36,6 @@ const TILES: { x: number; y: number; k: Cmd; r?: number }[] = [
 const STAR = "0,-30 7.6,-10.5 28.5,-9.3 12.4,4 17.6,24.3 0,13 -17.6,24.3 -12.4,4 -28.5,-9.3 -7.6,-10.5";
 const CONFETTI = ["--pink", "--purple", "--green", "--yellow", "--orange"];
 
-type Cmd = "maju" | "kiri" | "kanan";
 type Fx = { error: () => void; success: () => Promise<void> };
 
 // Next keeps visited layouts alive (hidden) and re-runs their effects when shown
@@ -48,18 +48,6 @@ const FxContext = createContext<{ current: Fx }>({ current: { error() {}, succes
 export function useAuthFx(): Fx {
   const ref = use(FxContext);
   return { error: () => ref.current.error(), success: () => ref.current.success() };
-}
-
-function Glyph({ k, r = 0 }: { k: Cmd; r?: number }) {
-  return (
-    <g fill="none" stroke="var(--ink)" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round">
-      {k === "maju" ? (
-        <path d="M-13 0H11M1-10 11 0 1 10" transform={`rotate(${r})`} />
-      ) : (
-        <path d="M-9 13V1Q-9-9 1-9H11M3-16 11-9 3-2" transform={k === "kiri" ? "scale(-1 1)" : undefined} />
-      )}
-    </g>
-  );
 }
 
 function LooseTile({ k, color, style }: { k: Cmd; color: string; style: React.CSSProperties }) {
