@@ -86,6 +86,102 @@ function PathNode({ k, color }: { k: Cmd; color: string }) {
   );
 }
 
+// Background decoration per page, in that page's lead + support colors (DESIGN.md §4).
+// `at` positions it inside the page; depth drives scroll parallax. Phones get only the
+// blobs: anything else would land on text, since content fills a narrow screen.
+type Deco = {
+  k: "blob" | "tile" | "pellets" | "star" | "ring" | "dots";
+  c: string;
+  c2?: string;
+  at: React.CSSProperties;
+  size?: number;
+  cmd?: Cmd;
+  r?: number;
+  depth: number;
+};
+
+const PELLETS = [
+  [10, 14, 7], [30, 6, 9], [26, 30, 6], [48, 20, 8], [44, 42, 6], [64, 34, 7], [12, 40, 5],
+];
+
+function Decor({ items }: { items: Deco[] }) {
+  return (
+    <div className="decor-layer" aria-hidden="true">
+      {items.map((d, i) => (
+        <div key={i} className={d.k === "blob" ? "decor" : "decor decor-wide"} data-depth={d.depth} style={d.at}>
+          <div className="decor-float" style={{ rotate: `${d.r ?? 0}deg` }}>
+            {d.k === "blob" && <div className="scene-blob decor-blob" style={{ width: `min(${d.size}px, 48vw)`, background: `var(${d.c})` }} />}
+            {d.k === "tile" && (
+              <div className="loose-tile" style={{ background: `var(${d.c})` }}>
+                <svg viewBox="-32 -32 64 64" width="100%" height="100%">
+                  <Glyph k={d.cmd ?? "maju"} />
+                </svg>
+              </div>
+            )}
+            {d.k === "pellets" && (
+              <svg width={d.size ?? 80} viewBox="0 0 76 50">
+                {PELLETS.map(([x, y, r], j) => (
+                  <ellipse key={j} cx={x} cy={y} rx={r} ry={r * 0.82} fill={`var(${j % 2 && d.c2 ? d.c2 : d.c})`} stroke="var(--ink)" strokeWidth={1.5} />
+                ))}
+              </svg>
+            )}
+            {d.k === "star" && (
+              <svg width={d.size ?? 56} viewBox="-32 -32 64 64">
+                <polygon points={STAR} fill={`var(${d.c})`} stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
+              </svg>
+            )}
+            {d.k === "ring" && (
+              <svg width={d.size ?? 96} viewBox="0 0 100 100">
+                <circle cx={50} cy={50} r={40} fill="none" stroke={`var(${d.c})`} strokeWidth={8} strokeDasharray="18 12" strokeLinecap="round" />
+              </svg>
+            )}
+            {d.k === "dots" && (
+              <svg width={d.size ?? 96} viewBox="0 0 96 64">
+                {Array.from({ length: 24 }, (_, j) => (
+                  <circle key={j} cx={8 + (j % 6) * 16} cy={8 + Math.floor(j / 6) * 16} r={3.5} fill={`var(${d.c})`} />
+                ))}
+              </svg>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const DECOR: Record<string, Deco[]> = {
+  recycling: [
+    { k: "blob", c: "--green", size: 320, at: { left: "-7%", bottom: "4%" }, depth: 0.3 },
+    { k: "blob", c: "--yellow", size: 200, at: { right: "-4%", top: "6%" }, depth: 0.5 },
+    { k: "pellets", c: "--green", c2: "--yellow", size: 96, at: { left: "6%", top: "12%" }, depth: 0.8 },
+    { k: "dots", c: "--yellow", at: { right: "8%", bottom: "6%" }, depth: 0.4 },
+    { k: "tile", c: "--green", cmd: "maju", r: -12, at: { left: "40%", bottom: "8%" }, depth: 1 },
+  ],
+  series: [
+    { k: "blob", c: "--pink", size: 300, at: { right: "-6%", top: "4%" }, depth: 0.3 },
+    { k: "blob", c: "--green", size: 340, at: { left: "-8%", bottom: "-4%" }, depth: 0.4 },
+    { k: "tile", c: "--green", cmd: "kiri", r: -10, at: { left: "6%", top: "12%" }, depth: 1 },
+    { k: "tile", c: "--pink", cmd: "kanan", r: 9, at: { right: "6%", bottom: "8%" }, depth: 1 },
+    { k: "pellets", c: "--pink", c2: "--green", size: 84, at: { right: "18%", top: "9%" }, depth: 0.7 },
+  ],
+  training: [
+    { k: "blob", c: "--yellow", size: 320, at: { left: "-6%", top: "6%" }, depth: 0.3 },
+    { k: "blob", c: "--orange", size: 180, at: { right: "-3%", bottom: "6%" }, depth: 0.5 },
+    { k: "ring", c: "--orange", at: { right: "6%", top: "8%" }, depth: 0.8 },
+    { k: "star", c: "--yellow", r: 12, at: { left: "6%", bottom: "8%" }, depth: 1 },
+    { k: "dots", c: "--yellow", at: { left: "42%", top: "7%" }, depth: 0.4 },
+    { k: "tile", c: "--yellow", cmd: "maju", r: 10, at: { left: "47%", bottom: "6%" }, depth: 1 },
+  ],
+  testimonials: [
+    { k: "blob", c: "--yellow", size: 300, at: { right: "-6%", top: "5%" }, depth: 0.3 },
+    { k: "blob", c: "--orange", size: 220, at: { left: "-6%", bottom: "8%" }, depth: 0.4 },
+    { k: "tile", c: "--orange", cmd: "kanan", r: -8, at: { left: "8%", top: "13%" }, depth: 1 },
+    { k: "star", c: "--yellow", size: 44, r: -10, at: { right: "22%", top: "12%" }, depth: 0.9 },
+    { k: "pellets", c: "--orange", c2: "--yellow", size: 88, at: { right: "8%", bottom: "8%" }, depth: 0.7 },
+    { k: "dots", c: "--orange", at: { left: "30%", bottom: "5%" }, depth: 0.4 },
+  ],
+};
+
 export default function Home() {
   return (
     <LandingMotion>
@@ -133,6 +229,7 @@ export default function Home() {
 
       <section id="daur-ulang" className="section page section-white">
         <PathNode k="maju" color="--green" />
+        <Decor items={DECOR.recycling} />
         <div className="container split">
           <div className="split-text">
             <p className="label eyebrow reveal" style={{ color: "var(--green-deep)" }}>Keberlanjutan</p>
@@ -158,8 +255,9 @@ export default function Home() {
 
       <section id="seri" className="section page">
         <PathNode k="kanan" color="--purple" />
+        <Decor items={DECOR.series} />
         <div className="container">
-          <div className="section page-head">
+          <div className="section-head">
             <p className="label eyebrow reveal" style={{ color: "var(--ink-muted)" }}>Seri Rimba · Seri Samudra</p>
             <h2 className="reveal">Jelajahi Rimba &amp; Samudra Nusantara.</h2>
             <p className="lead reveal">
@@ -189,6 +287,7 @@ export default function Home() {
 
       <section id="pelatihan" className="section page section-white">
         <PathNode k="maju" color="--yellow" />
+        <Decor items={DECOR.training} />
         <div className="container split split-flip">
           <div className="split-text">
             <p className="label eyebrow reveal" style={{ color: "var(--yellow-deep)" }}>Pelatihan Guru</p>
@@ -227,8 +326,9 @@ export default function Home() {
 
       <section id="testimoni" className="section page">
         <PathNode k="kiri" color="--orange" />
+        <Decor items={DECOR.testimonials} />
         <div className="container">
-          <div className="section page-head">
+          <div className="section-head">
             <p className="label eyebrow reveal" style={{ color: "var(--orange-deep)" }}>Testimoni</p>
             <h2 className="reveal">Kata Guru &amp; Orang Tua.</h2>
           </div>

@@ -513,6 +513,29 @@ a {
   justify-content: center;
   background: var(--cream);
 }
+.decor-layer {
+  position: absolute;
+  inset: 0;
+  z-index: -1; /* above the page background, below its content (.page isolates) */
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.decor {
+  position: absolute;
+}
+.decor-blob {
+  position: static;
+  opacity: 0.35;
+}
+.decor svg {
+  display: block;
+}
+@media (max-width: 899px) {
+  .decor-wide {
+    display: none;
+  }
+}
 .page > .container {
   width: 100%;
 }
