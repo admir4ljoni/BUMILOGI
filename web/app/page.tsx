@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { Glyph, type Cmd } from "@/components/glyph";
 import { LandingMotion } from "@/components/landing-motion";
+import { PRODUCTS, formatIDR } from "@/lib/products";
 
 // Static seed content; moves to the cms_contents table in task 13.
 // Testimonials and training docs are placeholders until real ones are collected.
@@ -348,7 +350,7 @@ export default function Home() {
           </div>
           <div className="series">
             {SERIES.map((s) => (
-              <article key={s.key} className="card series-card reveal" style={{ "--tilt": s.tilt } as React.CSSProperties}>
+              <Link key={s.key} href={`/produk/set-${s.key}`} className="card series-card reveal" style={{ "--tilt": s.tilt } as React.CSSProperties}>
                 <div className="image-well">
                   <div className="image-blob" style={{ background: `var(${s.color})` }} />
                   <span className="field-hint">Foto produk segera hadir</span>
@@ -359,9 +361,13 @@ export default function Home() {
                   <p className="muted">{s.habitat}</p>
                   <p>{s.text}</p>
                   <p className="muted" style={{ fontSize: 14 }}>Berisi: {s.animals.join(" · ")}</p>
+                  <p className="series-price">
+                    <span className="mono">{formatIDR(PRODUCTS.find((x) => x.edition === s.key)!.price_idr)}</span>
+                    <span className="series-more">Lihat detail →</span>
+                  </p>
                 </div>
                 <span className="series-dot" style={{ background: `var(${s.color})` }} />
-              </article>
+              </Link>
             ))}
           </div>
         </div>
