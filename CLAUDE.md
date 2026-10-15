@@ -38,7 +38,7 @@ CI (`.github/workflows/ci.yml`) runs exactly: `go vet` + `go test` against a `po
 
 ## Workflow rules
 
-- **Branching:** never commit directly to `main`. Make one branch per `TASKS.md` slice or fix, named `<type>/<short-slug>` (e.g. `feat/auth-email`, `fix/health-timeout`, `docs/claude-md`), and branch from an up-to-date `main`. Merge back into `main` once the checks pass.
+- **Branching:** never commit directly to `main`. Make one branch per `TASKS.md` slice or fix, named `<type>/<short-slug>` (e.g. `feat/auth-email`, `fix/health-timeout`, `docs/claude-md`), and branch from an up-to-date `main`. Merge back into `main` with `--no-ff` once the checks pass, and keep the branch afterwards (don't delete it).
 - **Check after every change:** run the checks for each side you touched before you commit. Run both when a change spans both sides or the API contract.
   - Web changes: `bun run lint && bun run build` in `web/` (plus `bun test` once tests exist).
   - API changes: `go vet ./... && go test ./...` in `api/`.
