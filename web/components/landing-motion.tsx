@@ -68,6 +68,25 @@ export function LandingMotion({ children }: { children: ReactNode }) {
           });
         }
 
+        // Decorations bob in place and drift with scroll; deeper ones move further.
+        gsap.to(q(".decor-float"), {
+          y: "random(-14, 14)",
+          rotation: "random(-6, 6)",
+          duration: "random(2.4, 3.8)",
+          ease: "sine.inOut",
+          repeat: -1,
+          yoyo: true,
+          repeatRefresh: true,
+        });
+        for (const el of q(".decor")) {
+          const d = Number(el.dataset.depth) * 90;
+          gsap.fromTo(el, { y: d }, {
+            y: -d,
+            ease: "none",
+            scrollTrigger: { trigger: el.closest(".page"), start: "top bottom", end: "bottom top", scrub: true },
+          });
+        }
+
         // Stacked pages: pin each page once its bottom is in view (so tall pages are read
         // in full), let the next one slide over it, and dim it as it's covered.
         for (const page of q(".page")) {
