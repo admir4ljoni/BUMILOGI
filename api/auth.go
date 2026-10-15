@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"log"
 	"net/mail"
 	"strings"
 	"time"
@@ -99,35 +98,30 @@ func register(db *pgxpool.Pool) fiber.Handler {
 		if err != nil {
 			return err
 		}
-		var phone *string
-		if in.Phone != "" {
-			phone = &in.Phone
-		}
 
 		// New email → insert. Existing but unverified → the newest registration
 		// takes over the row, so whoever registered first can't keep a password on
 		// an email they don't own. Verified → no-op. Same response either way.
 		var id string
 		err = db.QueryRow(c.Context(), `
-			insert into users (email, full_name, phone, password_hash) values ($1, $2, $3, $4)
+			insert into users (email, full_name, phone, password_hash) values ($1, $2, nullif($3, ''), $4)
 			on conflict (email) do update
 				set full_name = excluded.full_name, phone = excluded.phone,
 				    password_hash = excluded.password_hash, updated_at = now()
 				where users.email_verified_at is null
-			returning id`, email, in.FullName, phone, hash).Scan(&id)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return c.Status(fiber.StatusAccepted).JSON(fiber.Map{"status": "success", "message": genericMailMsg})
-		}
-		if err != nil {
+			returning id`, email, in.FullName, in.Phone, hash).Scan(&id)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return err
 		}
-		token, err := newEmailToken(c, db, id, "verify", verifyTTL)
-		if err != nil {
-			return err
+		if err == nil {
+			token, err := newEmailToken(c, db, id, "verify", verifyTTL)
+			if err != nil {
+				return err
+			}
+			go sendMail(email, "Verifikasi email BUMILOGI",
+				"Halo "+in.FullName+",\n\nKlik tautan ini untuk memverifikasi email kamu (berlaku 24 jam):\n"+
+					appURL+"/verify-email?token="+token+"\n\nAbaikan email ini jika kamu tidak mendaftar.")
 		}
-		go sendMail(email, "Verifikasi email BUMILOGI",
-			"Halo "+in.FullName+",\n\nKlik tautan ini untuk memverifikasi email kamu (berlaku 24 jam):\n"+
-				appURL+"/verify-email?token="+token+"\n\nAbaikan email ini jika kamu tidak mendaftar.")
 		return c.Status(fiber.StatusAccepted).JSON(fiber.Map{"status": "success", "message": genericMailMsg})
 	}
 }
@@ -378,7 +372,6 @@ func newEmailToken(c *fiber.Ctx, db *pgxpool.Pool, uid, purpose string, ttl time
 		insert into email_tokens (token_hash, user_id, purpose, expires_at) values ($1, $2, $3, $4)`,
 		sum[:], uid, purpose, time.Now().Add(ttl))
 	if err != nil {
-		log.Printf("email token: %v", err)
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(raw), nil
