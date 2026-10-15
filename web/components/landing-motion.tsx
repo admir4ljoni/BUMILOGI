@@ -57,13 +57,25 @@ export function LandingMotion({ children }: { children: ReactNode }) {
           once: true,
           onEnter: (els) => gsap.to(els, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.08, ease: "power3.out" }),
         });
-        // The coding path between sections draws itself as you scroll past it.
-        for (const line of q(".path-line")) {
-          gsap.from(line, {
-            scaleY: 0,
-            transformOrigin: "50% 0%",
+        for (const node of q(".path-node svg")) {
+          gsap.from(node, {
+            scale: 0,
+            rotation: -90,
+            transformOrigin: "50% 50%",
+            duration: 0.6,
+            ease: "back.out(3)",
+            scrollTrigger: { trigger: node, start: "top 95%" },
+          });
+        }
+
+        // Stacked pages: pin each page once its bottom is in view (so tall pages are read
+        // in full), let the next one slide over it, and dim it as it's covered.
+        for (const page of q(".page")) {
+          ScrollTrigger.create({ trigger: page, start: "bottom bottom", end: "max", pin: true, pinSpacing: false });
+          gsap.to(page, {
+            "--shade": 0.35,
             ease: "none",
-            scrollTrigger: { trigger: line, start: "top 90%", end: "bottom 60%", scrub: true },
+            scrollTrigger: { trigger: page, start: "bottom bottom", end: () => `+=${innerHeight}`, scrub: true },
           });
         }
       });

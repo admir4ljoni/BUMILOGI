@@ -50,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main>{children}</main>
         <footer
           style={{
+            position: "relative", // paints over the landing page's pinned last section
             background: "var(--ink)",
             color: "var(--cream)",
             borderRadius: "var(--r-xl) var(--r-xl) 0 0",

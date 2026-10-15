@@ -74,12 +74,11 @@ function Check() {
   );
 }
 
-// One step of the coding path that threads the sections together.
+// One step of the coding path, sitting on the top edge of each page.
 function PathNode({ k, color }: { k: Cmd; color: string }) {
   return (
     <div className="path-node" aria-hidden="true">
-      <div className="path-line" />
-      <svg className="reveal" viewBox="-32 -32 64 64" width="56" height="56">
+      <svg viewBox="-32 -32 64 64" width="56" height="56">
         <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${color})`} stroke="var(--ink)" strokeWidth={2.5} />
         <Glyph k={k} r={k === "maju" ? 90 : 0} />
       </svg>
@@ -90,7 +89,7 @@ function PathNode({ k, color }: { k: Cmd; color: string }) {
 export default function Home() {
   return (
     <LandingMotion>
-      <section className="hero">
+      <section className="hero page">
         <div className="container hero-copy">
           <p className="label" style={{ color: "var(--ink-muted)", margin: 0 }}>
             Keberlanjutan · Seri Rimba · Seri Samudra · Pelatihan Guru
@@ -132,8 +131,8 @@ export default function Home() {
         </div>
       </section>
 
-      <PathNode k="maju" color="--green" />
-      <section id="daur-ulang" className="section section-white">
+      <section id="daur-ulang" className="section page section-white">
+        <PathNode k="maju" color="--green" />
         <div className="container split">
           <div className="split-text">
             <p className="label eyebrow reveal" style={{ color: "var(--green-deep)" }}>Keberlanjutan</p>
@@ -157,10 +156,10 @@ export default function Home() {
         </div>
       </section>
 
-      <PathNode k="kanan" color="--purple" />
-      <section id="seri" className="section">
+      <section id="seri" className="section page">
+        <PathNode k="kanan" color="--purple" />
         <div className="container">
-          <div className="section-head">
+          <div className="section page-head">
             <p className="label eyebrow reveal" style={{ color: "var(--ink-muted)" }}>Seri Rimba · Seri Samudra</p>
             <h2 className="reveal">Jelajahi Rimba &amp; Samudra Nusantara.</h2>
             <p className="lead reveal">
@@ -188,8 +187,8 @@ export default function Home() {
         </div>
       </section>
 
-      <PathNode k="maju" color="--yellow" />
-      <section id="pelatihan" className="section section-white">
+      <section id="pelatihan" className="section page section-white">
+        <PathNode k="maju" color="--yellow" />
         <div className="container split split-flip">
           <div className="split-text">
             <p className="label eyebrow reveal" style={{ color: "var(--yellow-deep)" }}>Pelatihan Guru</p>
@@ -226,10 +225,10 @@ export default function Home() {
         </div>
       </section>
 
-      <PathNode k="kiri" color="--orange" />
-      <section id="testimoni" className="section">
+      <section id="testimoni" className="section page">
+        <PathNode k="kiri" color="--orange" />
         <div className="container">
-          <div className="section-head">
+          <div className="section page-head">
             <p className="label eyebrow reveal" style={{ color: "var(--orange-deep)" }}>Testimoni</p>
             <h2 className="reveal">Kata Guru &amp; Orang Tua.</h2>
           </div>
