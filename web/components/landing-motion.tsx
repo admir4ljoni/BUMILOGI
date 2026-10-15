@@ -21,6 +21,10 @@ export function LandingMotion({ children }: { children: ReactNode }) {
 
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // Hold the pinned hero on screen for a stretch of scroll (the next page starts
+        // lower; the gap is transparent) so the pawn's trip to the star is seen.
+        gsap.set(q(".hero + .page"), { marginTop: "70vh" });
+
         // Hero scene: board pieces pop in, then the pawn follows the track as you scroll.
         gsap
           .timeline({ defaults: { ease: "power3.out" } })
@@ -38,12 +42,28 @@ export function LandingMotion({ children }: { children: ReactNode }) {
 
         const track = root.current!.querySelector<SVGPathElement>(".hero-guide")!;
         gsap
-          .timeline({ scrollTrigger: { trigger: q(".hero-scene")[0], start: 0, end: "bottom 30%", scrub: 0.8 } })
+          .timeline({ scrollTrigger: { trigger: q(".hero")[0], start: "clamp(bottom bottom)", end: () => `+=${innerHeight * 0.6}`, scrub: 0.8, invalidateOnRefresh: true } })
           .to(q(".hero-pawn"), {
             motionPath: { path: track, align: track, alignOrigin: [0.5, 0.5], autoRotate: true, start: 0.04, end: 1 },
             ease: "none",
           })
-          .to(q(".hero-star"), { rotation: 72, scale: 1.3, transformOrigin: "50% 50%", duration: 0.15, ease: "back.out(3)" });
+          // Phones see the board wider than the screen: pan with the pawn like a camera.
+          // On desktop the board fits, so this is a no-op.
+          .to(q(".hero-scene svg"), { x: () => innerWidth - q(".hero-scene svg")[0].getBoundingClientRect().width, ease: "none" }, 0)
+          .to(q(".hero-star"), { rotation: 72, scale: 1.3, transformOrigin: "50% 50%", duration: 0.15, ease: "back.out(3)" })
+          .call(() => {
+            gsap.fromTo(q(".confetti"), { x: 0, y: 0, scale: 1, rotation: 0, autoAlpha: 1 }, {
+              x: () => gsap.utils.random(-110, 110),
+              y: () => gsap.utils.random(-100, 90),
+              rotation: () => gsap.utils.random(-200, 200),
+              scale: 0.3,
+              autoAlpha: 0,
+              duration: 1,
+              ease: "power3.out",
+              stagger: 0.012,
+              overwrite: true,
+            });
+          });
         gsap.to(q(".hero-blob"), {
           yPercent: -30,
           ease: "none",
@@ -87,16 +107,63 @@ export function LandingMotion({ children }: { children: ReactNode }) {
           });
         }
 
+        // Every robot blinks now and then.
+        gsap
+          .timeline({ repeat: -1, repeatDelay: 2.8 })
+          .to(q(".bot-eyes circle"), { scaleY: 0.1, transformOrigin: "50% 50%", duration: 0.08, yoyo: true, repeat: 1 });
+
+        // Playful loops per page, running only while that page is on screen.
+        for (const page of q(".page")) {
+          const loops: gsap.core.Animation[] = [];
+          for (const w of page.querySelectorAll<HTMLElement>(".walker")) {
+            const off = -w.offsetWidth - 20;
+            const end = () => page.offsetWidth + 20;
+            const rev = w.dataset.reverse !== undefined;
+            loops.push(
+              gsap.fromTo(w, { x: rev ? end : off }, { x: rev ? off : end, duration: Number(w.dataset.dur), ease: "none", repeat: -1 }),
+              gsap.to(w.querySelectorAll(".hop"), { y: -9, duration: 0.24, ease: "power1.out", stagger: { each: 0.09, repeat: -1, yoyo: true } }),
+            );
+            const roll = w.querySelectorAll(".roll");
+            if (roll.length) loops.push(gsap.to(roll, { rotation: 360, transformOrigin: "50% 50%", duration: 0.9, ease: "none", repeat: -1 }));
+          }
+          page.querySelectorAll(".sticker").forEach((el) => {
+            loops.push(
+              gsap
+                .timeline({ repeat: -1, repeatDelay: gsap.utils.random(0.6, 2.4), delay: gsap.utils.random(0, 2) })
+                .fromTo(el, { scale: 0, rotation: -80, autoAlpha: 1 }, { scale: 1, rotation: 0, duration: 0.5, ease: "back.out(3)" })
+                .to(el, { scale: 0, rotation: 40, duration: 0.3, ease: "power2.in" }, "+=1.6"),
+            );
+          });
+          page.querySelectorAll(".bubble").forEach((el, i) => {
+            loops.push(
+              gsap
+                .timeline({ repeat: -1, repeatDelay: 2, delay: i * 1.3 })
+                .fromTo(el, { y: 30, scale: 0.6, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.5, ease: "back.out(2.5)" })
+                .to(el, { y: -70, autoAlpha: 0, duration: 1.6, ease: "power1.in" }, "+=1.2"),
+            );
+          });
+          if (!loops.length) continue;
+          loops.forEach((t) => t.pause());
+          ScrollTrigger.create({
+            trigger: page,
+            start: "top bottom",
+            end: "bottom top",
+            onToggle: (st) => loops.forEach((t) => (st.isActive ? t.resume() : t.pause())),
+          });
+        }
+
         // Stacked pages: pin each page once its bottom is in view (so tall pages are read
         // in full), let the next one slide over it, and dim it as it's covered.
-        for (const page of q(".page")) {
+        const pages = q(".page");
+        pages.forEach((page, i) => {
           ScrollTrigger.create({ trigger: page, start: "bottom bottom", end: "max", pin: true, pinSpacing: false });
+          // Dim only while the next page (or the footer) is actually sliding over it.
           gsap.to(page, {
             "--shade": 0.35,
             ease: "none",
-            scrollTrigger: { trigger: page, start: "bottom bottom", end: () => `+=${innerHeight}`, scrub: true },
+            scrollTrigger: { trigger: pages[i + 1] ?? document.querySelector("footer"), start: "top bottom", end: "top top", scrub: true },
           });
-        }
+        });
       });
       return () => mm.revert();
     },

@@ -487,6 +487,11 @@ a {
   width: 100%;
   height: 100%;
 }
+@media (max-width: 640px) {
+  .hero-scene svg {
+    width: 260%;
+  }
+}
 .hero-blob {
   position: absolute;
   aspect-ratio: 1;
@@ -535,6 +540,45 @@ a {
   .decor-wide {
     display: none;
   }
+}
+/* Playful movers (animated in landing-motion.tsx) */
+.walker {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.walker[data-reverse] .bot {
+  scale: -1 1;
+}
+.hop {
+  display: block;
+}
+.carry {
+  display: grid;
+  justify-items: center;
+}
+.say,
+.bubble {
+  padding: 4px 12px;
+  border: 2px solid var(--ink);
+  border-radius: var(--r-full);
+  background: var(--white);
+  font: 700 13px/1.4 var(--font-body);
+  white-space: nowrap;
+}
+.say {
+  margin-bottom: 4px;
+}
+.sticker,
+.bubble {
+  position: absolute;
+  visibility: hidden; /* GSAP pops them in; stays hidden under reduced motion */
+}
+.bubble {
+  box-shadow: var(--shadow-float);
 }
 .page > .container {
   width: 100%;
