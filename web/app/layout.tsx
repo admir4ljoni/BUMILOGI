@@ -41,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
                 </svg>
               </Link>
-              <Link href="/" className="btn btn-primary" style={{ padding: "10px 20px" }}>
+              <Link href="/#seri" className="btn btn-primary" style={{ padding: "10px 20px" }}>
                 Pre-order
               </Link>
             </div>
