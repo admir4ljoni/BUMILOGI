@@ -57,6 +57,16 @@ func newApp(db *pgxpool.Pool, trustedProxies string) *fiber.App {
 		},
 	})
 	v1 := app.Group("/api/v1")
+	// CSRF guard: an HTML form on another site can POST urlencoded/multipart/text
+	// bodies (which BodyParser would accept) with no preflight, but not JSON. Every
+	// browser form submit sends a Content-Type, so only allow none (no body) or JSON.
+	// ponytail: per-route exemption needed when multipart upload routes land (tasks 9/13).
+	v1.Use(func(c *fiber.Ctx) error {
+		if c.Method() != fiber.MethodGet && c.Method() != fiber.MethodHead && c.Get("Content-Type") != "" && !c.Is("json") {
+			return fail(c, fiber.StatusUnsupportedMediaType, "Body harus berupa JSON")
+		}
+		return c.Next()
+	})
 	v1.Get("/health", func(c *fiber.Ctx) error {
 		if err := db.Ping(c.Context()); err != nil {
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"status": "error", "data": fiber.Map{"db": err.Error()}})

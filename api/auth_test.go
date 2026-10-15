@@ -42,6 +42,9 @@ type resp struct {
 func call(t *testing.T, app *fiber.App, method, path string, body any, mod ...func(*http.Request)) resp {
 	t.Helper()
 	b, _ := json.Marshal(body)
+	if raw, ok := body.(string); ok {
+		b = []byte(raw) // sent verbatim, for non-JSON bodies
+	}
 	req, _ := http.NewRequest(method, path, strings.NewReader(string(b)))
 	req.Header.Set("Content-Type", "application/json")
 	for _, f := range mod {
@@ -149,6 +152,28 @@ func TestEmailAuthFlow(t *testing.T) {
 	}
 	if r := call(t, app, "POST", "/api/v1/auth/refresh", nil, withCookies(l.cookies)); r.code != 200 || cookie(r, "access_token") == nil {
 		t.Fatalf("refresh: %d", r.code)
+	}
+}
+
+// A cross-site HTML form can't send JSON, so non-JSON bodies must be refused
+// before they can log a victim's browser into the attacker's account.
+func TestFormPostRejected(t *testing.T) {
+	app := newApp(testDB, "")
+	email := newEmail()
+	signup(t, app, email, "rahasia123")
+	form := "Email=" + email + "&Password=rahasia123"
+	multipart := "--x\r\nContent-Disposition: form-data; name=\"Email\"\r\n\r\n" + email +
+		"\r\n--x\r\nContent-Disposition: form-data; name=\"Password\"\r\n\r\nrahasia123\r\n--x--\r\n"
+	for ct, body := range map[string]string{
+		"application/x-www-form-urlencoded": form, "multipart/form-data; boundary=x": multipart, "text/plain": form,
+	} {
+		r := call(t, app, "POST", "/api/v1/auth/login", body, func(r *http.Request) { r.Header.Set("Content-Type", ct) })
+		if r.code != 415 || len(r.cookies) != 0 {
+			t.Fatalf("%s login: want 415 and no cookies, got %d %v", ct, r.code, r.cookies)
+		}
+	}
+	if r := call(t, app, "POST", "/api/v1/auth/logout", "", func(r *http.Request) { r.Header.Del("Content-Type") }); r.code != 200 {
+		t.Fatalf("bodyless logout: want 200, got %d", r.code)
 	}
 }
 
