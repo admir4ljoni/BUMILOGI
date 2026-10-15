@@ -8,11 +8,9 @@ export const metadata: Metadata = { title: "Akun saya — BUMILOGI" };
 
 export default function AccountPage() {
   return (
-    <section className="container" style={{ paddingBlock: "var(--s-2xl)" }}>
-      <Suspense fallback={<p style={{ color: "var(--ink-muted)" }}>Memuat akun…</p>}>
-        <Account />
-      </Suspense>
-    </section>
+    <Suspense fallback={<p style={{ color: "var(--ink-muted)" }}>Memuat akun…</p>}>
+      <Account />
+    </Suspense>
   );
 }
 
