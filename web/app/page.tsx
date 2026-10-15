@@ -63,6 +63,7 @@ const HERO_TILES: { x: number; y: number; k: Cmd; color: string }[] = [
   { x: 860, y: 120, k: "kanan", color: "--purple" },
   { x: 985, y: 120, k: "maju", color: "--orange" },
 ];
+const CONFETTI = ["--pink", "--purple", "--green", "--yellow", "--orange"];
 const STAR = "0,-30 7.6,-10.5 28.5,-9.3 12.4,4 17.6,24.3 0,13 -17.6,24.3 -12.4,4 -28.5,-9.3 -7.6,-10.5";
 
 function Check() {
@@ -104,7 +105,7 @@ const PELLETS = [
   [10, 14, 7], [30, 6, 9], [26, 30, 6], [48, 20, 8], [44, 42, 6], [64, 34, 7], [12, 40, 5],
 ];
 
-function Decor({ items }: { items: Deco[] }) {
+function Decor({ items, children }: { items: Deco[]; children?: React.ReactNode }) {
   return (
     <div className="decor-layer" aria-hidden="true">
       {items.map((d, i) => (
@@ -145,7 +146,65 @@ function Decor({ items }: { items: Deco[] }) {
           </div>
         </div>
       ))}
+      {children}
     </div>
+  );
+}
+
+// The pawn robot from the hero board, as a little character. Faces right.
+function Bot({ nose = "--orange" }: { nose?: string }) {
+  return (
+    <svg className="bot" width="48" height="48" viewBox="-32 -32 64 64">
+      <rect x={-24} y={-24} width={48} height={48} rx={16} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
+      <g className="bot-eyes">
+        <circle cx={8} cy={-8} r={4} fill="var(--ink)" />
+        <circle cx={8} cy={8} r={4} fill="var(--ink)" />
+      </g>
+      <path d="M21-7 31 0 21 7Z" fill={`var(${nose})`} stroke="var(--ink)" strokeWidth={2} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Pellet({ c }: { c: string }) {
+  return (
+    <svg className="hop roll" width="22" height="22" viewBox="-12 -12 24 24">
+      <circle r={10} fill={`var(${c})`} stroke="var(--ink)" strokeWidth={2} />
+      <circle cx={-3.5} cy={-3.5} r={2.5} fill="var(--white)" opacity={0.7} />
+    </svg>
+  );
+}
+
+function MiniTile({ c }: { c: string }) {
+  return (
+    <svg className="hop" width="30" height="30" viewBox="-32 -32 64 64">
+      <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${c})`} stroke="var(--ink)" strokeWidth={4} />
+      <Glyph k="maju" />
+    </svg>
+  );
+}
+
+// Walks across the page's bottom edge forever; .hop children bounce in a wave.
+function Walker({ dur, reverse, children }: { dur: number; reverse?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="walker" data-dur={dur} data-reverse={reverse || undefined}>
+      {children}
+    </div>
+  );
+}
+
+function Sticker({ c, at, size = 40 }: { c: string; at: React.CSSProperties; size?: number }) {
+  return (
+    <svg className="sticker decor-wide" width={size} viewBox="-32 -32 64 64" style={at}>
+      <polygon points={STAR} fill={`var(${c})`} stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Bubble({ text, at }: { text: string; at: React.CSSProperties }) {
+  return (
+    <span className="bubble decor-wide" style={at}>
+      {text}
+    </span>
   );
 }
 
@@ -215,12 +274,17 @@ export default function Home() {
             ))}
             <g transform="translate(1110 120)">
               <circle r={40} fill="var(--paper)" stroke="var(--line)" strokeWidth={2} />
+              {Array.from({ length: 16 }, (_, i) => (
+                <rect key={i} className="confetti" x={-5} y={-5} width={10} height={10} rx={i % 2 ? 5 : 2} fill={`var(${CONFETTI[i % 5]})`} />
+              ))}
               <polygon className="hero-star" points={STAR} fill="var(--yellow)" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
             </g>
             <g className="hero-pawn" transform="translate(4 240)">
               <rect x={-24} y={-24} width={48} height={48} rx={16} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
-              <circle cx={8} cy={-8} r={4} fill="var(--ink)" />
-              <circle cx={8} cy={8} r={4} fill="var(--ink)" />
+              <g className="bot-eyes">
+                <circle cx={8} cy={-8} r={4} fill="var(--ink)" />
+                <circle cx={8} cy={8} r={4} fill="var(--ink)" />
+              </g>
               <path d="M21-7 31 0 21 7Z" fill="var(--orange)" stroke="var(--ink)" strokeWidth={2} strokeLinejoin="round" />
             </g>
           </svg>
@@ -229,7 +293,16 @@ export default function Home() {
 
       <section id="daur-ulang" className="section page section-white">
         <PathNode k="maju" color="--green" />
-        <Decor items={DECOR.recycling} />
+        <Decor items={DECOR.recycling}>
+          <Walker dur={18}>
+            <span className="hop">
+              <Bot nose="--green" />
+            </span>
+            <Pellet c="--green" />
+            <Pellet c="--yellow" />
+            <Pellet c="--green" />
+          </Walker>
+        </Decor>
         <div className="container split">
           <div className="split-text">
             <p className="label eyebrow reveal" style={{ color: "var(--green-deep)" }}>Keberlanjutan</p>
@@ -255,7 +328,16 @@ export default function Home() {
 
       <section id="seri" className="section page">
         <PathNode k="kanan" color="--purple" />
-        <Decor items={DECOR.series} />
+        <Decor items={DECOR.series}>
+          <Walker dur={22}>
+            {["--pink", "--green", "--pink", "--green", "--pink"].map((c, i) => (
+              <MiniTile key={i} c={c} />
+            ))}
+            <span className="hop">
+              <Bot nose="--pink" />
+            </span>
+          </Walker>
+        </Decor>
         <div className="container">
           <div className="section-head">
             <p className="label eyebrow reveal" style={{ color: "var(--ink-muted)" }}>Seri Rimba · Seri Samudra</p>
@@ -287,7 +369,20 @@ export default function Home() {
 
       <section id="pelatihan" className="section page section-white">
         <PathNode k="maju" color="--yellow" />
-        <Decor items={DECOR.training} />
+        <Decor items={DECOR.training}>
+          <Walker dur={16} reverse>
+            <span className="hop carry">
+              <svg width="30" viewBox="-32 -32 64 64">
+                <polygon points={STAR} fill="var(--yellow)" stroke="var(--ink)" strokeWidth={3} strokeLinejoin="round" />
+              </svg>
+              <Bot nose="--yellow" />
+            </span>
+          </Walker>
+          <Sticker c="--yellow" at={{ left: "30%", top: "14%" }} />
+          <Sticker c="--orange" size={32} at={{ right: "28%", bottom: "16%" }} />
+          <Sticker c="--yellow" size={28} at={{ right: "14%", top: "30%" }} />
+          <Sticker c="--orange" size={34} at={{ left: "14%", top: "46%" }} />
+        </Decor>
         <div className="container split split-flip">
           <div className="split-text">
             <p className="label eyebrow reveal" style={{ color: "var(--yellow-deep)" }}>Pelatihan Guru</p>
@@ -326,7 +421,18 @@ export default function Home() {
 
       <section id="testimoni" className="section page">
         <PathNode k="kiri" color="--orange" />
-        <Decor items={DECOR.testimonials} />
+        <Decor items={DECOR.testimonials}>
+          <Walker dur={20}>
+            <span className="hop carry">
+              <span className="say">Hore!</span>
+              <Bot nose="--orange" />
+            </span>
+          </Walker>
+          <Bubble text="Maju!" at={{ left: "14%", top: "30%" }} />
+          <Bubble text="Belok kiri!" at={{ right: "12%", top: "36%" }} />
+          <Bubble text="Ulangi ×2" at={{ left: "40%", bottom: "14%" }} />
+          <Bubble text="Sampai!" at={{ left: "22%", top: "20%" }} />
+        </Decor>
         <div className="container">
           <div className="section-head">
             <p className="label eyebrow reveal" style={{ color: "var(--orange-deep)" }}>Testimoni</p>
