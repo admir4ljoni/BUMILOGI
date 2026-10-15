@@ -159,7 +159,7 @@ export default function Home() {
       <section id="seri" className="section page">
         <PathNode k="kanan" color="--purple" />
         <div className="container">
-          <div className="section page-head">
+          <div className="section-head">
             <p className="label eyebrow reveal" style={{ color: "var(--ink-muted)" }}>Seri Rimba · Seri Samudra</p>
             <h2 className="reveal">Jelajahi Rimba &amp; Samudra Nusantara.</h2>
             <p className="lead reveal">
@@ -228,7 +228,7 @@ export default function Home() {
       <section id="testimoni" className="section page">
         <PathNode k="kiri" color="--orange" />
         <div className="container">
-          <div className="section page-head">
+          <div className="section-head">
             <p className="label eyebrow reveal" style={{ color: "var(--orange-deep)" }}>Testimoni</p>
             <h2 className="reveal">Kata Guru &amp; Orang Tua.</h2>
           </div>
