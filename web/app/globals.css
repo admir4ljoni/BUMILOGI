@@ -467,7 +467,7 @@ a {
 }
 
 .hero {
-  padding-top: var(--s-2xl);
+  padding-block: var(--s-2xl);
 }
 .hero-copy {
   display: grid;
@@ -495,17 +495,40 @@ a {
 }
 
 .path-node {
-  display: grid;
-  justify-items: center;
-  padding-top: var(--s-lg);
-  margin-bottom: calc(-1 * var(--s-lg) - 28px);
-  position: relative;
-  z-index: 1;
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 2;
 }
-.path-line {
-  width: 0;
-  height: var(--s-2xl);
-  border-left: 3px dashed var(--ink-soft);
+
+/* Stacked pages: each one pins when its bottom reaches the viewport bottom and
+   the next slides up over it (landing-motion.tsx). --shade darkens the covered one. */
+.page {
+  position: relative;
+  isolation: isolate; /* keeps the path tile's z-index inside its own page */
+  min-height: 100svh; /* a shorter page would pin with the one below it peeking out above */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: var(--cream);
+}
+.page > .container {
+  width: 100%;
+}
+.page + .page {
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  box-shadow: 0 -20px 40px -24px rgba(43, 38, 34, 0.35);
+}
+.page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ink);
+  opacity: var(--shade, 0);
+  pointer-events: none;
+  z-index: 3;
 }
 
 .section {
@@ -671,7 +694,7 @@ a {
 }
 @media (min-width: 900px) {
   .hero {
-    padding-top: var(--s-3xl);
+    padding-block: var(--s-3xl) var(--s-2xl);
   }
   .section {
     padding-block: 128px;
