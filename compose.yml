@@ -1,3 +1,5 @@
+# `make dev` starts only `db`; the app runs on your machine with live reload.
+# `docker compose up --build` runs everything in containers: open http://localhost:3000.
 services:
   db:
     image: postgres:16-alpine
@@ -5,4 +7,28 @@ services:
     ports: ["127.0.0.1:5432:5432"]          # localhost only
     volumes: [pgdata:/var/lib/postgresql/data]
     healthcheck: { test: ["CMD", "pg_isready", "-U", "bumilogi"], interval: 2s }
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://bumilogi:dev@db:5432/bumilogi?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-in-prod-32-bytes-min}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      # SMTP_* unset: verification/reset mails are printed in `docker compose logs api`.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@bumilogi.com}
+    depends_on: { db: { condition: service_healthy } }
+    healthcheck: { test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/v1/health"], interval: 3s, start_period: 5s }
+    restart: unless-stopped
+
+  web:
+    build: ./web                            # bakes API_URL=http://api:8080 into the /api rewrite
+    environment: { API_URL: "http://api:8080" }
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: { api: { condition: service_healthy } }
+    restart: unless-stopped
+
 volumes: { pgdata: {} }

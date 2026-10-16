@@ -11,6 +11,7 @@ Planning docs are local-only (gitignored): `docs/PLAN.md` (architecture and busi
 ```sh
 make dev                 # Postgres (docker compose) + air (api :8080) + bun dev (web :3000)
 make db | make api | make web | make stop
+docker compose up --build  # whole stack in containers (db + api + web) on :3000
 docker compose down -v   # wipe DB; migrations rebuild it on next API start
 docker compose exec db psql -U bumilogi
 
