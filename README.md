@@ -6,7 +6,25 @@ Web portal for **klik-klak**, a screen-free coding toy for children aged 4–6, 
 - `web/`: Next.js 16 (App Router) on Bun. UI only; it calls the Go API.
 - Postgres 16 runs in Docker, in development too.
 
-## Prerequisites
+## Quick start with Docker (no Go or Bun needed)
+
+Only Docker is required. From the repo root:
+
+```sh
+git clone git@github.com:admir4ljoni/BUMILOGI.git
+cd BUMILOGI
+docker compose up --build
+```
+
+Open <http://localhost:3000>. The first build takes a few minutes; later starts are fast. This runs Postgres, the API and the web app in containers.
+
+- **Verifying an account:** no real email is sent. The verification link is printed in the API log: run `docker compose logs api` and open the `verify-email` link.
+- **Stop:** `Ctrl+C`, or `docker compose down` if started with `-d`. Add `-v` to also wipe the database.
+- **After pulling new code:** run `docker compose up --build` again so the images are rebuilt.
+- Ports 3000 and 5432 must be free, so stop `make dev` first if it is running.
+- This setup is for trying the app locally. It uses the dev JWT secret and no HTTPS, so don't expose it to the internet as is.
+
+## Prerequisites (for development)
 
 | Tool | Version | Install |
 |---|---|---|
