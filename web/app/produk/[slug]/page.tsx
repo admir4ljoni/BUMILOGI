@@ -4,15 +4,12 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Glyph } from "@/components/glyph";
 import { OrderCard } from "@/components/order-card";
-import { EDITION_COLOR, PRODUCTS, formatIDR } from "@/lib/products";
-
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
-}
+import { api } from "@/lib/api";
+import { EDITION_COLOR, formatIDR, type Product as ProductT } from "@/lib/products";
 
 export async function generateMetadata({ params }: PageProps<"/produk/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const p = PRODUCTS.find((x) => x.slug === slug);
+  const { data: p } = await api<ProductT>("/products/" + encodeURIComponent(slug));
   return { title: p ? `${p.name} — BUMILOGI` : "Produk — BUMILOGI", description: p?.description };
 }
 
@@ -57,11 +54,14 @@ function ProductSkeleton() {
   );
 }
 
-function Product({ slug }: { slug: string }) {
-  const p = PRODUCTS.find((x) => x.slug === slug);
+async function Product({ slug }: { slug: string }) {
+  const [{ data: p }, { data: all }] = await Promise.all([
+    api<ProductT>("/products/" + encodeURIComponent(slug)),
+    api<ProductT[]>("/products"),
+  ]);
   if (!p) notFound();
   const color = EDITION_COLOR[p.edition];
-  const other = PRODUCTS.find((x) => x.slug !== p.slug);
+  const other = all?.find((x) => x.slug !== p.slug);
 
   return (
     <div className="container product">

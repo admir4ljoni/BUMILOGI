@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { api } from "@/lib/api";
 import { Glyph, type Cmd } from "@/components/glyph";
 import { LandingMotion } from "@/components/landing-motion";
-import { PRODUCTS, formatIDR } from "@/lib/products";
+import { formatIDR, type Product } from "@/lib/products";
 
 // Static seed content; moves to the cms_contents table in task 13.
 // Testimonials and training docs are placeholders until real ones are collected.
@@ -243,6 +245,12 @@ const DECOR: Record<string, Deco[]> = {
   ],
 };
 
+// Only the price is dynamic; the rest of the landing stays prerendered.
+async function SeriesPrice({ slug }: { slug: string }) {
+  const { data } = await api<Product>("/products/" + slug).catch(() => ({ data: undefined }));
+  return data ? formatIDR(data.price_idr) : "—";
+}
+
 export default function Home() {
   return (
     <LandingMotion>
@@ -362,7 +370,11 @@ export default function Home() {
                   <p>{s.text}</p>
                   <p className="muted" style={{ fontSize: 14 }}>Berisi: {s.animals.join(" · ")}</p>
                   <p className="series-price">
-                    <span className="mono">{formatIDR(PRODUCTS.find((x) => x.edition === s.key)!.price_idr)}</span>
+                    <span className="mono">
+                      <Suspense fallback="Rp …">
+                        <SeriesPrice slug={`set-${s.key}`} />
+                      </Suspense>
+                    </span>
                     <span className="series-more">Lihat detail →</span>
                   </p>
                 </div>
