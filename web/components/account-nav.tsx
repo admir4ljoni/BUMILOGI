@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,8 +9,21 @@ const LINKS = [
   { href: "/kelas", label: "Kelas & Keluarga", color: "--yellow" },
 ];
 
+// The path is runtime data on dynamic routes (/pesanan/[id]), so it streams in;
+// the fallback is the same links without the active state.
 export function AccountNav() {
-  const path = usePathname();
+  return (
+    <Suspense fallback={<Nav path="" />}>
+      <CurrentNav />
+    </Suspense>
+  );
+}
+
+function CurrentNav() {
+  return <Nav path={usePathname()} />;
+}
+
+function Nav({ path }: { path: string }) {
   return (
     <nav className="dash-nav" aria-label="Dasbor">
       {LINKS.map((l) => (

@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { formatIDR } from "@/lib/products";
+import { QtyStepper } from "./qty-stepper";
 
-// Quantity limits match the planned preorders check (1–100). The total here is a
-// preview only; the server computes the real price at checkout (task 7).
-export function OrderCard({ price }: { price: number }) {
+// The total here is a preview only; the server prices the order.
+export function OrderCard({ price, slug }: { price: number; slug: string }) {
   const [qty, setQty] = useState(1);
-  const set = (n: number) => setQty(Math.min(100, Math.max(1, n || 1)));
 
   return (
     <div className="order-card">
@@ -15,29 +15,15 @@ export function OrderCard({ price }: { price: number }) {
         <span className="field-label" id="qty-label">
           Jumlah set
         </span>
-        <div className="stepper" role="group" aria-labelledby="qty-label">
-          <button type="button" onClick={() => set(qty - 1)} disabled={qty <= 1} aria-label="Kurangi">
-            −
-          </button>
-          <input
-            className="mono"
-            inputMode="numeric"
-            value={qty}
-            onChange={(e) => set(Number(e.target.value.replace(/\D/g, "")))}
-            aria-labelledby="qty-label"
-          />
-          <button type="button" onClick={() => set(qty + 1)} disabled={qty >= 100} aria-label="Tambah">
-            +
-          </button>
-        </div>
+        <QtyStepper value={qty} onChange={setQty} labelId="qty-label" />
       </div>
       <div className="order-row order-total">
         <span>Total</span>
         <strong className="mono">{formatIDR(price * qty)}</strong>
       </div>
-      <button type="button" className="btn btn-primary btn-block" disabled>
-        Pre-order segera dibuka
-      </button>
+      <Link href={`/preorder?produk=${slug}&qty=${qty}`} className="btn btn-primary btn-block">
+        Pre-order sekarang
+      </Link>
       <p className="field-hint" style={{ margin: 0 }}>
         Belum termasuk ongkos kirim. Pembayaran lewat transfer bank, dikonfirmasi via WhatsApp.
       </p>

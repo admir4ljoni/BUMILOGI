@@ -94,7 +94,7 @@ async function Product({ slug }: { slug: string }) {
           <h1 className="product-title">{p.name}</h1>
           <p className="muted">{p.tagline}</p>
           <p className="product-price mono">{formatIDR(p.price_idr)}</p>
-          <OrderCard price={p.price_idr} />
+          <OrderCard price={p.price_idr} slug={p.slug} />
           <ul className="perks">
             {PERKS.map((k) => (
               <li key={k.title}>

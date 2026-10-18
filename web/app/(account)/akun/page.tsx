@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { api, type User } from "@/lib/api";
@@ -33,6 +34,11 @@ async function Account() {
         <dt>Bergabung</dt>
         <dd>{new Date(u.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}</dd>
       </dl>
+      {u.role === "manager" && (
+        <Link href="/admin/pengaturan" className="btn btn-secondary">
+          Pengaturan pembayaran
+        </Link>
+      )}
       <LogoutButton />
     </div>
   );
