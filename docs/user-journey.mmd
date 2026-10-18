@@ -1,0 +1,46 @@
+%% BUMILOGI purchase journey (business flow): buyer, website, bank, admin.
+%% Rules from PLAN.md / PRD EPIC 4. Open questions are marked "?" in dashed boxes.
+flowchart TD
+    subgraph BUYER [Buyer: parent / teacher]
+        b1([Receives link via WhatsApp<br/>or finds the website]) --> b2[Reads about Set Rimba / Set Samudra]
+        b2 --> b3[Picks a set + quantity<br/>taps Pre-order]
+        b3 --> b4{Has an account?}
+        b4 -- no --> b5[Registers with email<br/>opens verify link in mail]
+        b5 --> b6
+        b4 -- yes --> b6[Logs in]
+        b6 --> b7[Fills in recipient name, WhatsApp,<br/>full address; optional map pin]
+        b7 --> b8[Submits the pre-order]
+        b9[Sees: Transfer tepat Rp 250.347] --> b10[Transfers the EXACT amount<br/>from own bank / e-wallet] --> b11[Uploads transfer proof<br/>on the order page]
+        b11 --> b12[Taps Konfirmasi via WhatsApp<br/>message prefilled with code + total]
+        b13[Pays shipping cost]
+        b14([Receives the set<br/>order shows Dikirim])
+    end
+
+    subgraph WEB [Website]
+        w1[Prices the order on the server<br/>set price × qty + unique code Rp 1–999]
+        w1 --> w2[Saves order as Menunggu Pembayaran<br/>order code BUMI-YYYY-XXXXX]
+        w2 --> w3[Confirmation page: exact amount,<br/>bank account, WhatsApp button]
+    end
+
+    subgraph ADMIN [Admin / manager]
+        a1[Gets the buyer's WhatsApp message] --> a2[Opens admin orders,<br/>searches by the exact amount]
+        a2 --> a3{Same amount on the<br/>BANK STATEMENT?<br/>never trust the screenshot}
+        a3 -- yes --> a4[Sets status Terverifikasi]
+        a4 --> a5[Quotes shipping cost on WhatsApp]
+        a6[Packs + ships, sends tracking number<br/>sets status Dikirim]
+        a3 -- "not yet" --> a7[Asks buyer on WhatsApp<br/>to check the transfer]
+        a7 --> a3
+        a3 -- "never paid / buyer cancels" --> a8[Sets status Dibatalkan<br/>amount is freed for new orders]
+    end
+
+    b8 --> w1
+    w3 --> b9
+    b12 --> a1
+    a5 --> b13 --> a6 --> b14
+
+    q1["? Shipping paid how: separate transfer,<br/>or added before confirming"]:::open
+    q2["? Payment deadline before auto/manual cancel"]:::open
+    b13 -.- q1
+    a8 -.- q2
+
+    classDef open stroke-dasharray: 5 5
