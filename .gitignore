@@ -1,6 +1,7 @@
 .claude
 claude
-docs
+docs/*
+!docs/flowchart.mmd
 TASKS.md
 .env
 api/tmp/
