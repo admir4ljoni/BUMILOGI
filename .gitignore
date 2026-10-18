@@ -2,6 +2,7 @@
 claude
 docs/*
 !docs/flowchart.mmd
+!docs/user-journey.mmd
 TASKS.md
 .env
 api/tmp/
