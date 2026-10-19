@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { useAuthFx } from "./auth-shell";
 
 const FIELDS = {
@@ -42,7 +41,6 @@ export function AuthForm({
   autoSubmit?: boolean; // verify-email: submit the link's token on load
   footer?: ReactNode;
 }) {
-  const router = useRouter();
   const fx = useAuthFx();
   const [pending, setPending] = useState(!!autoSubmit);
   const [error, setError] = useState("");
@@ -65,8 +63,10 @@ export function AuthForm({
       if (!res.ok) throw new Error(json.message ?? "Terjadi kesalahan. Coba lagi.");
       await fx.success();
       if (onSuccess === "redirect") {
-        router.replace(nextPath());
-        router.refresh();
+        // Full load, not router.replace + refresh: refresh() re-renders the current
+        // route (/login) and can win the race, leaving the form stuck on "Memproses…".
+        // A new session also means every cached server render is stale.
+        location.replace(nextPath());
       } else {
         setDone(json.message ?? json.data?.message);
         setPending(false);
