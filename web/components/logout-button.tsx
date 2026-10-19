@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function LogoutButton() {
-  const router = useRouter();
   const [pending, setPending] = useState(false);
   return (
     <button
@@ -13,8 +11,7 @@ export function LogoutButton() {
       onClick={async () => {
         setPending(true);
         await fetch("/api/v1/auth/logout", { method: "POST" });
-        router.replace("/login");
-        router.refresh();
+        location.replace("/login"); // full load drops every cached logged-in render (see auth-form)
       }}
     >
       {pending ? "Keluar…" : "Keluar"}
