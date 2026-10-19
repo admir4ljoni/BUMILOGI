@@ -75,6 +75,8 @@ func newApp(db *pgxpool.Pool, trustedProxies string) *fiber.App {
 	})
 	authRoutes(v1, db)
 	productRoutes(v1, db)
+	orderRoutes(v1, db)
+	settingsRoutes(v1, db)
 	return app
 }
 

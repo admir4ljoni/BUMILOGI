@@ -302,6 +302,18 @@ func requireAuth(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+// requireRole runs after requireAuth. The role comes from the access JWT.
+// ponytail: a demoted manager keeps access until the token expires (15m);
+// read the role from users here if demotions must be instant.
+func requireRole(role string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if c.Locals("role") != role {
+			return fail(c, fiber.StatusForbidden, "Akses ditolak")
+		}
+		return c.Next()
+	}
+}
+
 type claims struct {
 	Type    string `json:"typ"`
 	Role    string `json:"role,omitempty"`
