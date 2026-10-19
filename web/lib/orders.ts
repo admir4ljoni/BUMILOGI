@@ -19,6 +19,7 @@ export type Order = {
   place_id: string | null;
   status: "pending_payment" | "confirmed" | "shipped" | "cancelled";
   created_at: string;
+  has_payment_proof: boolean; // file at GET /api/v1/preorders/:id/payment-proof
   payment: Payment | null; // null until a manager sets the bank details
   whatsapp_url: string | null;
 };

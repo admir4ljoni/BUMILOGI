@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { STATUS, type Order } from "@/lib/orders";
 import { formatIDR } from "@/lib/products";
 import { CopyButton } from "@/components/copy-button";
+import { ProofUpload } from "@/components/proof-upload";
 
 export const metadata: Metadata = { title: "Pesanan — BUMILOGI" };
 
@@ -75,6 +76,8 @@ async function OrderDetail({ id }: { id: string }) {
             </p>
           )}
 
+          <ProofUpload orderId={o.id} hasProof={o.has_payment_proof} />
+
           {o.whatsapp_url && (
             <a className="btn btn-primary btn-block" href={o.whatsapp_url} target="_blank" rel="noopener noreferrer">
               Konfirmasi via WhatsApp
@@ -98,6 +101,16 @@ async function OrderDetail({ id }: { id: string }) {
               <dd>
                 <a href={`https://www.openstreetmap.org/?mlat=${o.lat}&mlon=${o.lng}#map=18/${o.lat}/${o.lng}`} target="_blank" rel="noopener noreferrer">
                   Lihat titik lokasi
+                </a>
+              </dd>
+            </>
+          )}
+          {!pending && o.has_payment_proof && (
+            <>
+              <dt>Bukti transfer</dt>
+              <dd>
+                <a href={`/api/v1/preorders/${o.id}/payment-proof`} target="_blank" rel="noopener noreferrer">
+                  Lihat bukti
                 </a>
               </dd>
             </>
