@@ -211,3 +211,36 @@ func TestPreorderAmountCollision(t *testing.T) {
 		t.Fatalf("exhausted retries: want 503, got %d", r.code)
 	}
 }
+
+func TestMyPreorders(t *testing.T) {
+	isolateOrders(t)
+	app := newApp(testDB, "")
+	if r := call(t, app, "GET", "/api/v1/me/preorders", nil); r.code != 401 {
+		t.Fatalf("logged out: want 401, got %d", r.code)
+	}
+	a := withCookies(signup(t, app, newEmail(), "rahasia123").cookies)
+	b := withCookies(signup(t, app, newEmail(), "rahasia123").cookies)
+	if r := call(t, app, "GET", "/api/v1/me/preorders", nil, a); r.code != 200 || len(r.body["data"].([]any)) != 0 {
+		t.Fatalf("no orders: want 200 [], got %d %v", r.code, r.body)
+	}
+
+	var codes []string
+	for qty := range 2 {
+		in := validOrder()
+		in["quantity"] = qty + 1
+		codes = append(codes, call(t, app, "POST", "/api/v1/preorders", in, a).body["data"].(map[string]any)["order_code"].(string))
+	}
+	call(t, app, "POST", "/api/v1/preorders", validOrder(), b)
+
+	list := call(t, app, "GET", "/api/v1/me/preorders", nil, a).body["data"].([]any)
+	if len(list) != 2 {
+		t.Fatalf("want A's 2 orders only, got %v", list)
+	}
+	first := list[0].(map[string]any)
+	if first["order_code"] != codes[1] || list[1].(map[string]any)["order_code"] != codes[0] {
+		t.Fatalf("want newest first %v, got %v", codes, list)
+	}
+	if first["product_name"] != "Set Rimba" || first["quantity"] != 2.0 || first["status"] != "pending_payment" || first["address_text"] != nil {
+		t.Fatalf("summary fields: %v", first)
+	}
+}

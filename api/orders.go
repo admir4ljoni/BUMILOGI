@@ -41,6 +41,18 @@ type order struct {
 	WhatsAppURL   *string          `json:"whatsapp_url"` // wa.me link prefilled with code + total
 }
 
+// One row of GET /me/preorders; the detail endpoint carries address and payment.
+type orderSummary struct {
+	ID          string    `json:"id"`
+	OrderCode   string    `json:"order_code"`
+	ProductName string    `json:"product_name"`
+	Edition     string    `json:"edition"`
+	Quantity    int       `json:"quantity"`
+	TotalIDR    int       `json:"total_idr"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 // Overridden in tests to force amount collisions.
 var randUniqueCode = func() int { return mrand.IntN(999) + 1 }
 
@@ -49,6 +61,17 @@ func orderRoutes(r fiber.Router, db *pgxpool.Pool) {
 		return fail(c, fiber.StatusTooManyRequests, "Terlalu banyak pesanan. Coba lagi dalam satu menit.")
 	}})
 	r.Post("/preorders", limit, requireAuth, createPreorder(db))
+	// ponytail: newest 100, no paging; add a cursor if a buyer ever passes that.
+	r.Get("/me/preorders", requireAuth, func(c *fiber.Ctx) error {
+		rows, _ := db.Query(c.Context(), `select p.id, p.order_code, pr.name, pr.edition, p.quantity, p.total_idr, p.status, p.created_at
+			from preorders p join products pr on pr.id = p.product_id
+			where p.user_id = $1 order by p.created_at desc limit 100`, c.Locals("uid"))
+		os, err := pgx.CollectRows(rows, pgx.RowToStructByPos[orderSummary])
+		if err != nil {
+			return err
+		}
+		return ok(c, os)
+	})
 	r.Get("/preorders/:id", requireAuth, func(c *fiber.Ctx) error {
 		o, err := loadOrder(c.Context(), db, c.Params("id"), c.Locals("uid").(string), c.Locals("role") == "manager")
 		if err != nil {
