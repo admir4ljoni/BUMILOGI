@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { api } from "@/lib/api";
 import { STATUS, type Order } from "@/lib/orders";
@@ -29,6 +30,9 @@ async function OrderDetail({ id }: { id: string }) {
 
   return (
     <div className="checkout">
+      <Link href="/pesanan" className="muted">
+        ← Semua pesanan
+      </Link>
       <div className="dash-head">
         <span className="chip" style={{ background: `var(${status.color})` }}>
           {status.label}

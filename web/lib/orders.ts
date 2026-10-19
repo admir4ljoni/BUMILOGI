@@ -23,6 +23,9 @@ export type Order = {
   whatsapp_url: string | null;
 };
 
+// `GET /api/v1/me/preorders`: one row of the order history.
+export type OrderSummary = Pick<Order, "id" | "order_code" | "product_name" | "edition" | "quantity" | "total_idr" | "status" | "created_at">;
+
 export const STATUS = {
   pending_payment: { label: "Menunggu pembayaran", color: "--yellow" },
   confirmed: { label: "Terverifikasi", color: "--green" },

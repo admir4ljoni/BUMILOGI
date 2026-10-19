@@ -797,6 +797,20 @@ a {
   background: var(--orange);
   transform: rotate(-45deg);
 }
+.order-list {
+  display: grid;
+  gap: var(--s-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.order-link {
+  color: inherit;
+  text-decoration: none;
+}
+.order-link:hover {
+  box-shadow: var(--shadow-float);
+}
 .dash-panel.empty {
   display: grid;
   justify-items: center;
