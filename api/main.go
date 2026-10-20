@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,6 +18,10 @@ var version = "dev"
 func main() {
 	jwtKey = []byte(mustEnv("JWT_SECRET"))
 	appURL = strings.TrimRight(mustEnv("APP_URL"), "/")
+	uploadDir = mustEnv("UPLOAD_DIR")
+	if err := os.MkdirAll(filepath.Join(uploadDir, "private"), 0o750); err != nil {
+		log.Fatal(err)
+	}
 	db, err := openDB(context.Background(), mustEnv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal(err)
@@ -38,6 +43,7 @@ func newApp(db *pgxpool.Pool, trustedProxies string) *fiber.App {
 		proxies = strings.Split(trustedProxies, ",")
 	}
 	app := fiber.New(fiber.Config{
+		BodyLimit:               6 << 20, // 5 MB proof + multipart overhead; task 13 raises it for 20 MB PDFs
 		ProxyHeader:             "X-Real-IP",
 		EnableTrustedProxyCheck: true,
 		TrustedProxies:          proxies,
@@ -60,9 +66,11 @@ func newApp(db *pgxpool.Pool, trustedProxies string) *fiber.App {
 	// CSRF guard: an HTML form on another site can POST urlencoded/multipart/text
 	// bodies (which BodyParser would accept) with no preflight, but not JSON. Every
 	// browser form submit sends a Content-Type, so only allow none (no body) or JSON.
-	// ponytail: per-route exemption needed when multipart upload routes land (tasks 9/13).
+	// File uploads need multipart: allowed only from our own origin (browsers always
+	// send Origin on POST), on top of the SameSite=Lax session cookie.
 	v1.Use(func(c *fiber.Ctx) error {
-		if c.Method() != fiber.MethodGet && c.Method() != fiber.MethodHead && c.Get("Content-Type") != "" && !c.Is("json") {
+		multipart := strings.HasPrefix(c.Get("Content-Type"), "multipart/form-data") && c.Get("Origin") == appURL
+		if c.Method() != fiber.MethodGet && c.Method() != fiber.MethodHead && c.Get("Content-Type") != "" && !c.Is("json") && !multipart {
 			return fail(c, fiber.StatusUnsupportedMediaType, "Body harus berupa JSON")
 		}
 		return c.Next()

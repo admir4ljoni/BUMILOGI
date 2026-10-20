@@ -7,6 +7,8 @@ import (
 	"math"
 	mrand "math/rand/v2"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -37,8 +39,9 @@ type order struct {
 	PlaceID       *string          `json:"place_id"`
 	Status        string           `json:"status"`
 	CreatedAt     time.Time        `json:"created_at"`
-	Payment       *paymentSettings `json:"payment"`      // nil until a manager sets it; the page hides the bank section
-	WhatsAppURL   *string          `json:"whatsapp_url"` // wa.me link prefilled with code + total
+	HasProof      bool             `json:"has_payment_proof"` // the file itself is behind GET /preorders/:id/payment-proof
+	Payment       *paymentSettings `json:"payment"`           // nil until a manager sets it; the page hides the bank section
+	WhatsAppURL   *string          `json:"whatsapp_url"`      // wa.me link prefilled with code + total
 }
 
 // One row of GET /me/preorders; the detail endpoint carries address and payment.
@@ -72,6 +75,11 @@ func orderRoutes(r fiber.Router, db *pgxpool.Pool) {
 		}
 		return ok(c, os)
 	})
+	proofLimit := limiter.New(limiter.Config{Max: 10, Expiration: time.Minute, LimitReached: func(c *fiber.Ctx) error {
+		return fail(c, fiber.StatusTooManyRequests, "Terlalu banyak unggahan. Coba lagi dalam satu menit.")
+	}})
+	r.Post("/preorders/:id/payment-proof", proofLimit, requireAuth, uploadProof(db))
+	r.Get("/preorders/:id/payment-proof", requireAuth, serveProof(db))
 	r.Get("/preorders/:id", requireAuth, func(c *fiber.Ctx) error {
 		o, err := loadOrder(c.Context(), db, c.Params("id"), c.Locals("uid").(string), c.Locals("role") == "manager")
 		if err != nil {
@@ -155,6 +163,88 @@ func createPreorder(db *pgxpool.Pool) fiber.Handler {
 	}
 }
 
+// uploadProof stores the buyer's transfer proof while the order awaits payment.
+// It never changes the status; only the manager does (task 10).
+func uploadProof(db *pgxpool.Pool) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id, uid := c.Params("id"), c.Locals("uid").(string)
+		if uuid.Validate(id) != nil {
+			return fiber.NewError(fiber.StatusNotFound, "Pesanan tidak ditemukan")
+		}
+		fh, err := c.FormFile("file")
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Pilih file bukti transfer")
+		}
+		dir := filepath.Join(uploadDir, "private")
+		name, err := saveUpload(fh, dir)
+		if err != nil {
+			return err
+		}
+		// old is read under the row lock, so a concurrent re-upload can't leak a file.
+		var old *string
+		err = db.QueryRow(c.Context(), `update preorders p set payment_proof_path = $1, updated_at = now()
+			from (select payment_proof_path from preorders where id = $2 for update) old
+			where p.id = $2 and p.user_id = $3 and p.status = 'pending_payment'
+			returning old.payment_proof_path`, name, id, uid).Scan(&old)
+		if err != nil {
+			os.Remove(filepath.Join(dir, name))
+			if !errors.Is(err, pgx.ErrNoRows) {
+				return err
+			}
+			if _, err := loadOrder(c.Context(), db, id, uid, false); err != nil {
+				return err // not theirs: 404
+			}
+			return fiber.NewError(fiber.StatusConflict, "Pesanan ini sudah tidak menunggu pembayaran")
+		}
+		if old != nil {
+			os.Remove(filepath.Join(dir, *old))
+		}
+		o, err := loadOrder(c.Context(), db, id, uid, false)
+		if err != nil {
+			return err
+		}
+		return ok(c, o)
+	}
+}
+
+// serveProof streams the proof to its owner or a manager. A buyer could upload a
+// booby-trapped file to attack the manager's session, so: nosniff + CSP sandbox
+// on every response, and PDFs (which can carry JavaScript) download instead of
+// opening in the logged-in tab.
+func serveProof(db *pgxpool.Pool) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		notFound := fiber.NewError(fiber.StatusNotFound, "Bukti transfer tidak ditemukan")
+		id := c.Params("id")
+		if uuid.Validate(id) != nil {
+			return notFound
+		}
+		var code string
+		var name *string
+		err := db.QueryRow(c.Context(), `select order_code, payment_proof_path from preorders
+			where id = $1 and (user_id::text = $2 or $3)`, id, c.Locals("uid"), c.Locals("role") == "manager").Scan(&code, &name)
+		if errors.Is(err, pgx.ErrNoRows) || err == nil && name == nil {
+			return notFound
+		}
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(filepath.Join(uploadDir, "private", *name))
+		if err != nil {
+			return err
+		}
+		ext := filepath.Ext(*name)
+		c.Set("Cache-Control", "private, no-store")
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("Content-Security-Policy", "sandbox")
+		if ext == ".pdf" {
+			c.Attachment("bukti-transfer-" + code + ext)
+		} else {
+			c.Type(ext)
+		}
+		return c.Send(data)
+	}
+}
+
 // loadOrder returns the order if uid owns it or asManager is set. Anything else,
 // including a malformed id, is a 404 so ids can't be probed.
 func loadOrder(ctx context.Context, db *pgxpool.Pool, id, uid string, asManager bool) (*order, error) {
@@ -164,11 +254,12 @@ func loadOrder(ctx context.Context, db *pgxpool.Pool, id, uid string, asManager 
 	}
 	var o order
 	err := db.QueryRow(ctx, `select p.id, p.order_code, pr.name, pr.slug, pr.edition, p.unit_price_idr, p.quantity,
-		p.unique_code, p.total_idr, p.recipient_name, p.phone, p.address_text, p.lat, p.lng, p.place_id, p.status, p.created_at
+		p.unique_code, p.total_idr, p.recipient_name, p.phone, p.address_text, p.lat, p.lng, p.place_id, p.status, p.created_at,
+		p.payment_proof_path is not null
 		from preorders p join products pr on pr.id = p.product_id
 		where p.id = $1 and (p.user_id::text = $2 or $3)`, id, uid, asManager).Scan(
 		&o.ID, &o.OrderCode, &o.ProductName, &o.ProductSlug, &o.Edition, &o.UnitPriceIDR, &o.Quantity,
-		&o.UniqueCode, &o.TotalIDR, &o.RecipientName, &o.Phone, &o.AddressText, &o.Lat, &o.Lng, &o.PlaceID, &o.Status, &o.CreatedAt)
+		&o.UniqueCode, &o.TotalIDR, &o.RecipientName, &o.Phone, &o.AddressText, &o.Lat, &o.Lng, &o.PlaceID, &o.Status, &o.CreatedAt, &o.HasProof)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, notFound
 	}
