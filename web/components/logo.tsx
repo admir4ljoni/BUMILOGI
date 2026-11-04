@@ -16,6 +16,7 @@ export function Logo() {
 export const SECTIONS = [
   { href: "/#daur-ulang", label: "Daur Ulang", color: "--green" },
   { href: "/#seri", label: "Seri", color: "--pink" },
+  { href: "/papan-koding", label: "Papan Koding", color: "--purple" },
   { href: "/#pelatihan", label: "Pelatihan", color: "--yellow" },
   { href: "/#testimoni", label: "Testimoni", color: "--orange" },
 ];
