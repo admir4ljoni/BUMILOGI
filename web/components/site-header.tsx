@@ -1,16 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { SHOPEE_URL } from "@/lib/products";
 import { Logo, SECTIONS } from "./logo";
-
-function AccountIcon() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-    </svg>
-  );
-}
 
 export function SiteHeader() {
   return (
@@ -31,12 +23,9 @@ export function SiteHeader() {
         </ul>
 
         <div className="nav-actions">
-          <Link href="/akun" className="icon-btn nav-account" aria-label="Akun saya">
-            <AccountIcon />
-          </Link>
-          <Link href="/#seri" className="btn btn-primary nav-cta">
-            Pre-order
-          </Link>
+          <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary nav-cta">
+            Beli di Shopee
+          </a>
           <button type="button" className="icon-btn nav-menu-btn" popoverTarget="nav-menu" aria-label="Buka menu">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <path d="M4 7h16M4 12h16M4 17h10" />
@@ -67,12 +56,6 @@ export function SiteHeader() {
               </Link>
             </li>
           ))}
-          <li>
-            <Link href="/akun" className="nav-menu-link">
-              <AccountIcon />
-              Akun saya
-            </Link>
-          </li>
         </ul>
       </div>
     </header>

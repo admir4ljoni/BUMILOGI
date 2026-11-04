@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { Glyph } from "@/components/glyph";
-import { OrderCard } from "@/components/order-card";
-import { api } from "@/lib/api";
-import { EDITION_COLOR, formatIDR, type Product as ProductT } from "@/lib/products";
+import { EDITION_COLOR, PRODUCTS, formatIDR, product } from "@/lib/products";
+
+export function generateStaticParams() {
+  return PRODUCTS.map((p) => ({ slug: p.slug }));
+}
 
 export async function generateMetadata({ params }: PageProps<"/produk/[slug]">): Promise<Metadata> {
-  const { slug } = await params;
-  const { data: p } = await api<ProductT>("/products/" + encodeURIComponent(slug));
+  const p = product((await params).slug);
   return { title: p ? `${p.name} — BUMILOGI` : "Produk — BUMILOGI", description: p?.description };
 }
 
@@ -28,40 +28,11 @@ function Check() {
   );
 }
 
-// params resolve inside Suspense so a client navigation can show the skeleton instantly.
-export default function ProductPage({ params }: PageProps<"/produk/[slug]">) {
-  return (
-    <Suspense fallback={<ProductSkeleton />}>
-      {params.then(({ slug }) => (
-        <Product slug={slug} />
-      ))}
-    </Suspense>
-  );
-}
-
-function ProductSkeleton() {
-  return (
-    <div className="container product" aria-busy="true">
-      <div className="product-top">
-        <div className="image-well product-well" />
-        <div className="product-info">
-          <div className="skeleton" style={{ width: "40%", height: 56 }} />
-          <div className="skeleton" style={{ width: "30%", height: 28 }} />
-          <div className="skeleton" style={{ height: 220, borderRadius: "var(--r-lg)" }} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-async function Product({ slug }: { slug: string }) {
-  const [{ data: p }, { data: all }] = await Promise.all([
-    api<ProductT>("/products/" + encodeURIComponent(slug)),
-    api<ProductT[]>("/products"),
-  ]);
+export default async function ProductPage({ params }: PageProps<"/produk/[slug]">) {
+  const p = product((await params).slug);
   if (!p) notFound();
   const color = EDITION_COLOR[p.edition];
-  const other = all?.find((x) => x.slug !== p.slug);
+  const other = PRODUCTS.find((x) => x.slug !== p.slug);
 
   return (
     <div className="container product">
@@ -94,7 +65,14 @@ async function Product({ slug }: { slug: string }) {
           <h1 className="product-title">{p.name}</h1>
           <p className="muted">{p.tagline}</p>
           <p className="product-price mono">{formatIDR(p.price_idr)}</p>
-          <OrderCard price={p.price_idr} slug={p.slug} />
+          <div className="order-card">
+            <a href={p.shopee_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-block">
+              Beli di Shopee
+            </a>
+            <p className="field-hint" style={{ margin: 0 }}>
+              Pembelian, pembayaran, dan pengiriman lewat Shopee.
+            </p>
+          </div>
           <ul className="perks">
             {PERKS.map((k) => (
               <li key={k.title}>

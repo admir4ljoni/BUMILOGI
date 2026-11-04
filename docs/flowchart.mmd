@@ -1,69 +1,9 @@
-%% BUMILOGI user/program flow. Solid = built, dashed border = planned (task number in label).
-%% Every page request passes through proxy.ts first; every /api/v1 call is the Go API + Postgres.
+%% BUMILOGI site flow. Static site: no accounts or backend. Dashed = planned (task number in label).
 flowchart TD
-    visit([Visitor opens link<br/>often from WhatsApp]) --> proxy{"proxy.ts:<br/>access cookie expires &lt; 60s<br/>and refresh cookie exists?"}
-    proxy -- no --> landing
-    proxy -- yes --> refresh["POST /auth/refresh"]
-    refresh -- 200 --> setc[Set new cookies on request + response] --> landing
-    refresh -- 401 --> clear[Clear cookies] --> landing
-
-    landing["/ Landing<br/>hero, values, catalog, testimonials"]
-    landing --> product["/produk/[slug]<br/>GET /products/:slug"]
-    landing --> sim["/simulator (task 4)<br/>tap-to-add blocks, run, success/collision"]
-    landing --> login
-
-    %% ---------- Auth ----------
-    subgraph AUTH [Auth: email]
-        register["/register<br/>POST /auth/register"] --> mail[Verify mail sent<br/>generic response]
-        mail --> verify["/verify-email?token<br/>POST /auth/verify-email"]
-        verify --> akun
-        login["/login<br/>POST /auth/login"] --> lchk{"verified and<br/>password ok?"}
-        lchk -- "no (6th fail/min → 429)" --> login
-        lchk -- yes --> next["redirect to ?next or /akun"]
-        login --> forgot["/forgot-password<br/>POST /auth/forgot-password"] --> reset["/reset-password?token<br/>POST /auth/reset-password<br/>bumps token_version"] --> login
-        login --> register
-        google["Google sign-in (task 5)<br/>POST /auth/google, links by email"] --> next
-    end
-    login -.-> google
-
-    %% ---------- Checkout ----------
-    subgraph CHECKOUT [Checkout: task 7]
-        product -- "Pre-order, qty" --> po{"/preorder?produk=slug<br/>logged in?"}
-        po -- no --> login
-        po -- yes --> form["Order form<br/>name, WhatsApp, qty,<br/>free-text address (required)"]
-        form -.-> maps["Maps autocomplete + draggable pin<br/>fills lat/lng/place_id (optional)"] -.-> form
-        form --> create["POST /preorders<br/>server reads price from products"]
-        create --> valid{valid?}
-        valid -- no, 400 --> form
-        valid -- yes --> ins["INSERT order: random BUMI-YYYY code<br/>+ unique code 1–999 on total"]
-        ins -- "unique violation, retry ≤ 10" --> ins
-        ins -- ok --> confirm["/pesanan/[id]<br/>GET /preorders/:id (owner only, else 404)<br/>transfer EXACT total + bank details"]
-        confirm --> wa(["wa.me/admin with prefilled<br/>code + total"])
-    end
-
-    %% ---------- Account ----------
-    subgraph ACCOUNT [Account area]
-        akun["/akun<br/>GET /auth/me"]
-        akun --> orders["My orders (task 8)<br/>GET /me/preorders"] --> confirm
-        confirm --> proof["Upload transfer proof (task 9)<br/>POST /preorders/:id/payment-proof<br/>sniff type, 5 MB cap, private dir"] --> wa
-        akun --> kelas["/kelas groups & children<br/>now: localStorage preview<br/>task 11: /groups API"]
-        kelas --> prog["Mission progress (task 12)<br/>PUT /children/:id/progress/:mission"]
-        akun --> logout["POST /auth/logout"] --> landing
-    end
-    next --> akun
-
-    %% ---------- Admin ----------
-    subgraph ADMIN [Manager: tasks 10, 13]
-        aorders["/admin/orders<br/>filter, search by exact amount, view proof"]
-        aorders --> bank{"amount on bank<br/>statement matches?"}
-        bank -- yes --> st1["pending_payment → confirmed → shipped"]
-        bank -- "no / buyer cancels" --> st2["pending_payment → cancelled"]
-        acms["/admin content<br/>CMS, products, missions, uploads"]
-    end
-    wa -.-> aorders
-    st1 -.-> orders
-    acms -.-> landing
-    acms -.-> sim
-
-    classDef planned stroke-dasharray: 5 5
-    class sim,google,po,form,maps,create,valid,ins,confirm,wa,orders,proof,prog,aorders,bank,st1,st2,acms planned
+    visit([Visitor opens link<br/>often from WhatsApp]) --> landing
+    landing["/ Landing<br/>hero, values, catalog, training, testimonials"]
+    landing --> product["/produk/[slug]<br/>static data from lib/products.ts"]
+    landing -.-> sim["/simulator (task 4)<br/>virtual board: tap-to-add blocks, run, success/collision"]
+    landing -- "Beli di Shopee" --> shopee([Shopee store<br/>new tab])
+    product -- "Beli di Shopee" --> shopee
+    product --> other["Other set's /produk page"]
