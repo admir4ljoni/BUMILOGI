@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { Suspense } from "react";
-import { api } from "@/lib/api";
 import { Glyph, type Cmd } from "@/components/glyph";
 import { LandingMotion } from "@/components/landing-motion";
-import { formatIDR, type Product } from "@/lib/products";
+import { SHOPEE_URL, formatIDR, product } from "@/lib/products";
 
 // Static seed content; moves to the cms_contents table in task 13.
 // Testimonials and training docs are placeholders until real ones are collected.
@@ -245,12 +243,6 @@ const DECOR: Record<string, Deco[]> = {
   ],
 };
 
-// Only the price is dynamic; the rest of the landing stays prerendered.
-async function SeriesPrice({ slug }: { slug: string }) {
-  const { data } = await api<Product>("/products/" + slug).catch(() => ({ data: undefined }));
-  return data ? formatIDR(data.price_idr) : "—";
-}
-
 export default function Home() {
   return (
     <LandingMotion>
@@ -262,7 +254,7 @@ export default function Home() {
           <h1>Belajar Koding, Tanpa Layar.</h1>
           <p className="lead">Mainan edukatif dari plastik daur ulang yang melatih logika anak 4–6 tahun lewat bermain.</p>
           <div style={{ display: "flex", gap: "var(--s-md)", justifyContent: "center", flexWrap: "wrap" }}>
-            <a className="btn btn-primary" href="#seri">Pre-order Sekarang</a>
+            <a className="btn btn-primary" href={SHOPEE_URL} target="_blank" rel="noopener noreferrer">Beli di Shopee</a>
             <a className="btn btn-secondary" href="/simulator">Coba Papan Koding</a>
           </div>
         </div>
@@ -370,11 +362,7 @@ export default function Home() {
                   <p>{s.text}</p>
                   <p className="muted" style={{ fontSize: 14 }}>Berisi: {s.animals.join(" · ")}</p>
                   <p className="series-price">
-                    <span className="mono">
-                      <Suspense fallback="Rp …">
-                        <SeriesPrice slug={`set-${s.key}`} />
-                      </Suspense>
-                    </span>
+                    <span className="mono">{formatIDR(product(`set-${s.key}`)!.price_idr)}</span>
                     <span className="series-more">Lihat detail →</span>
                   </p>
                 </div>

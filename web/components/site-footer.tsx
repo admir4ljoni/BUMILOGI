@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SHOPEE_URL } from "@/lib/products";
 import { Logo, SECTIONS } from "./logo";
 import { Glyph, type Cmd } from "./glyph";
 
@@ -16,9 +17,9 @@ export function SiteFooter() {
       <div className="container">
         <div className="footer-cta">
           <h2>Siap bermain sambil belajar?</h2>
-          <Link href="/#seri" className="btn btn-primary">
-            Pre-order Sekarang
-          </Link>
+          <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+            Beli di Shopee
+          </a>
         </div>
 
         <div className="footer-grid">
@@ -34,20 +35,6 @@ export function SiteFooter() {
                   <Link href={s.href}>{s.label}</Link>
                 </li>
               ))}
-            </ul>
-          </nav>
-          <nav aria-label="Akun">
-            <p className="label footer-head">Akun</p>
-            <ul>
-              <li>
-                <Link href="/login">Masuk</Link>
-              </li>
-              <li>
-                <Link href="/register">Daftar</Link>
-              </li>
-              <li>
-                <Link href="/akun">Akun saya</Link>
-              </li>
             </ul>
           </nav>
         </div>
