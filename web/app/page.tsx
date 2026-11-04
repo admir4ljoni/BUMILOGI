@@ -255,7 +255,7 @@ export default function Home() {
           <p className="lead">Mainan edukatif dari plastik daur ulang yang melatih logika anak 4–6 tahun lewat bermain.</p>
           <div style={{ display: "flex", gap: "var(--s-md)", justifyContent: "center", flexWrap: "wrap" }}>
             <a className="btn btn-primary" href={SHOPEE_URL} target="_blank" rel="noopener noreferrer">Beli di Shopee</a>
-            <a className="btn btn-secondary" href="/simulator">Coba Papan Koding</a>
+            <a className="btn btn-secondary" href="/papan-koding">Coba Papan Koding</a>
           </div>
         </div>
 

@@ -8,6 +8,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with: { bun-version-file: web/package.json }
-      - run: bun install --frozen-lockfile && bun run lint && bun run build
+      - run: bun install --frozen-lockfile && bun test && bun run lint && bun run build
         working-directory: web
-      # ponytail: add `bun test` once web/lib/board.test.ts exists (bun test fails with no test files)
