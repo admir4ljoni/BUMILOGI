@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { MISSIONS, run, type Cmd } from "@/lib/board";
 import { CMD, PX, TileIcon, burst, draw, lerpF, toF } from "./coding-board";
+import { Glyph } from "./glyph";
 
 // The hero's demo: tiles click into the program one by one, then the animal walks
 // the route to the star. Runs the real engine on mission 3, on a loop.
@@ -13,6 +14,27 @@ export function HeroBoard() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [placed, setPlaced] = useState(PROGRAM.length);
   const [active, setActive] = useState<number | null>(null);
+
+  // Pointer parallax: the board tilts and the loose pieces drift toward the cursor (mouse only).
+  useEffect(() => {
+    const hero = canvas.current!.closest<HTMLElement>(".hero");
+    if (!hero || !matchMedia("(pointer: fine) and (prefers-reduced-motion: no-preference)").matches) return;
+    const move = (e: PointerEvent) => {
+      const r = hero.getBoundingClientRect();
+      hero.style.setProperty("--px", ((e.clientX - r.left) / r.width - 0.5).toFixed(3));
+      hero.style.setProperty("--py", ((e.clientY - r.top) / r.height - 0.5).toFixed(3));
+    };
+    const leave = () => {
+      hero.style.removeProperty("--px");
+      hero.style.removeProperty("--py");
+    };
+    hero.addEventListener("pointermove", move);
+    hero.addEventListener("pointerleave", leave);
+    return () => {
+      hero.removeEventListener("pointermove", move);
+      hero.removeEventListener("pointerleave", leave);
+    };
+  }, []);
 
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
@@ -72,6 +94,7 @@ export function HeroBoard() {
 
   return (
     <figure className="hero-board">
+      <Pieces />
       <div className="board-frame">
         <canvas ref={canvas} width={PX} height={PX} role="img" aria-label="Contoh di papan 6×6: badak berjalan maju tiga langkah, belok kanan, lalu maju tiga langkah sampai di bintang." />
       </div>
@@ -79,7 +102,7 @@ export function HeroBoard() {
         {PROGRAM.map((c, i) => (
           <li
             key={i}
-            className={"cb-tile cb-tile-sm" + (i === active ? " is-active" : "")}
+            className={"cb-tile cb-tile-sm" + (i < placed ? " is-placed" : "") + (i === active ? " is-active" : "")}
             style={{ background: `var(${CMD[c].color})`, visibility: i < placed ? "visible" : "hidden" }}
           >
             <TileIcon k={c} />
@@ -88,5 +111,28 @@ export function HeroBoard() {
         ))}
       </ol>
     </figure>
+  );
+}
+
+// Loose pieces floating around the board. `--d` is how far each drifts with the pointer.
+function Pieces() {
+  return (
+    <div className="hero-pieces" aria-hidden="true">
+      <svg className="piece piece-star" style={{ "--d": -18 } as CSSProperties} viewBox="-32 -32 64 64">
+        <path d="M0-26 7.6-10.5 24.7-8 12.4 4 15.3 21 0 13 -15.3 21-12.4 4-24.7-8-7.6-10.5Z" fill="var(--yellow)" stroke="var(--ink)" strokeWidth={3.5} strokeLinejoin="round" />
+      </svg>
+      <svg className="piece piece-kiri" style={{ "--d": 26 } as CSSProperties} viewBox="-32 -32 64 64">
+        <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--purple)" stroke="var(--ink)" strokeWidth={3.5} />
+        <Glyph k="kiri" />
+      </svg>
+      <svg className="piece piece-maju" style={{ "--d": -30 } as CSSProperties} viewBox="-32 -32 64 64">
+        <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--orange)" stroke="var(--ink)" strokeWidth={3.5} />
+        <Glyph k="maju" r={-90} />
+      </svg>
+      <svg className="piece piece-cap" style={{ "--d": 14 } as CSSProperties} viewBox="-32 -32 64 64">
+        <circle r={24} fill="var(--pink)" stroke="var(--ink)" strokeWidth={3.5} />
+        <circle r={14} fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeDasharray="4 5" />
+      </svg>
+    </div>
   );
 }

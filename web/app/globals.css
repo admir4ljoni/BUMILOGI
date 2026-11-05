@@ -170,6 +170,10 @@ button {
   cursor: pointer;
   transition: translate 120ms var(--ease), box-shadow 120ms var(--ease), background 120ms var(--ease);
 }
+.btn:hover:not(:disabled) {
+  translate: 0 -2px;
+  box-shadow: 0 6px 0 var(--ink);
+}
 .btn:active:not(:disabled) {
   translate: 0 4px;
   box-shadow: 0 0 0 var(--ink);
@@ -961,12 +965,438 @@ button {
   }
 }
 
+/* ---------- Motion ----------
+   One orchestrated entrance (preloader → hero), reveals as sections scroll in, and a few
+   pieces that keep moving. Everything here is switched off under reduced motion. */
+main {
+  overflow-x: clip; /* floating pieces and the tilted ticker may poke past the edge */
+}
+.footer-cta .btn:hover:not(:active) {
+  box-shadow: 0 6px 0 var(--white);
+}
+
+/* Preloader: tiles click into a row, then the sheet slides up with an ink edge. */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--s-lg);
+  background: var(--white);
+  box-shadow: 0 10px 0 var(--ink);
+  animation: preloader-out 0.7s var(--ease) 5s forwards; /* no-JS fallback */
+}
+html[data-loaded] .preloader {
+  animation: preloader-out 0.8s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+@keyframes preloader-out {
+  to {
+    translate: 0 calc(-100% - 12px);
+    visibility: hidden;
+  }
+}
+.preloader-tiles {
+  display: flex;
+  gap: 10px;
+}
+.preloader-tiles svg {
+  width: 60px;
+  height: 60px;
+  animation: loader-tile 1.6s var(--ease) both infinite;
+  animation-delay: calc(var(--i) * 140ms);
+}
+@keyframes loader-tile {
+  0% {
+    opacity: 0;
+    translate: 0 -32px;
+    scale: 0.7;
+  }
+  18%,
+  72% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+.preloader p {
+  font: 600 15px/1 var(--font-display);
+  color: var(--ink-muted);
+}
+
+/* Scroll progress along the header's bottom edge (where scroll timelines exist). */
+@supports (animation-timeline: scroll()) {
+  .site-header::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -1px;
+    height: 3px;
+    background: var(--orange);
+    transform-origin: left;
+    animation: grow-x linear both;
+    animation-timeline: scroll(root);
+  }
+}
+@keyframes grow-x {
+  from {
+    scale: 0 1;
+  }
+}
+
+/* Mobile menu drops in. */
+.nav-menu {
+  opacity: 0;
+  translate: 0 -8px;
+  transition: opacity 0.2s, translate 0.25s var(--ease), display 0.25s allow-discrete, overlay 0.25s allow-discrete;
+}
+.nav-menu:popover-open {
+  opacity: 1;
+  translate: 0 0;
+}
+@starting-style {
+  .nav-menu:popover-open {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+
+/* Hero entrance, started by the preloader. */
+.hero-word {
+  display: inline-block;
+}
+html[data-loaded] .hero-word {
+  animation: word-in 0.8s var(--ease) both;
+  animation-delay: calc(0.35s + var(--i) * 90ms);
+}
+html[data-loaded] .hero-copy > :not(h1) {
+  animation: rise 0.8s var(--ease) 0.75s both;
+}
+html[data-loaded] .hero-copy > .actions {
+  animation-delay: 0.9s;
+}
+html[data-loaded] .hero-board .board-frame {
+  animation: board-in 1s cubic-bezier(0.34, 1.4, 0.64, 1) 0.45s both;
+}
+html[data-loaded] .hero-strip {
+  animation: rise 0.6s var(--ease) 0.9s both;
+}
+@keyframes word-in {
+  from {
+    opacity: 0;
+    translate: 0 0.6em;
+    rotate: 6deg;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+}
+@keyframes board-in {
+  from {
+    opacity: 0;
+    translate: 0 80px;
+    rotate: -5deg;
+  }
+}
+
+/* The board follows the pointer a little; --px/--py come from hero-board.tsx. */
+.hero-board {
+  position: relative;
+}
+.hero .board-frame {
+  position: relative;
+  z-index: 1;
+  transform: perspective(1400px) rotateX(calc(var(--py, 0) * -7deg)) rotateY(calc(var(--px, 0) * 9deg));
+  transition: transform 0.5s var(--ease);
+}
+.hero-strip .cb-tile-sm {
+  opacity: 0;
+  scale: 0.4;
+  transition: opacity 0.2s, scale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.hero-strip .is-placed {
+  opacity: 1;
+  scale: 1;
+}
+
+/* Loose pieces around the hero board: they bob, and drift by --d px with the pointer. */
+.hero-pieces {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.piece {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  translate: calc(var(--px, 0) * var(--d) * 1px) calc(var(--py, 0) * var(--d) * 1px);
+  transition: translate 0.6s var(--ease);
+  animation: bob 6s ease-in-out infinite;
+}
+.piece-star {
+  --s: 72px;
+  --r: -12deg;
+  top: -30px;
+  left: -28px;
+}
+.piece-kiri {
+  --s: 58px;
+  --r: 12deg;
+  top: 16%;
+  right: -26px;
+  animation-delay: -2s;
+}
+.piece-maju {
+  --s: 54px;
+  --r: -10deg;
+  bottom: 30%;
+  left: -30px;
+  animation-delay: -4s;
+}
+.piece-cap {
+  --s: 46px;
+  --r: 0deg;
+  bottom: 22%;
+  right: -20px;
+  animation-delay: -1s;
+}
+html[data-loaded] .piece {
+  animation: piece-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, bob 6s ease-in-out infinite;
+  animation-delay: 1.1s, 0s;
+}
+html[data-loaded] .piece:nth-child(2) {
+  animation-delay: 1.2s, -2s;
+}
+html[data-loaded] .piece:nth-child(3) {
+  animation-delay: 1.3s, -4s;
+}
+html[data-loaded] .piece:nth-child(4) {
+  animation-delay: 1.4s, -1s;
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--r));
+  }
+  50% {
+    transform: translateY(-12px) rotate(calc(var(--r) + 8deg));
+  }
+}
+@keyframes piece-in {
+  from {
+    scale: 0;
+  }
+}
+@media (max-width: 640px) {
+  .piece-star {
+    --s: 52px;
+    top: -18px;
+    left: -12px;
+  }
+  .piece-kiri {
+    --s: 42px;
+    right: -12px;
+  }
+  .piece-maju {
+    --s: 40px;
+    left: -14px;
+  }
+  .piece-cap {
+    --s: 34px;
+    right: -10px;
+  }
+}
+
+/* Ticker: a tilted ribbon of facts under the hero. Hover pauses it. */
+.ticker {
+  display: flex;
+  width: 110%;
+  margin: var(--s-xl) 0 0 -5%;
+  overflow: hidden;
+  border-block: var(--edge);
+  background: var(--yellow);
+  rotate: -1.5deg;
+}
+.ticker-track {
+  display: flex;
+  flex: none;
+  gap: 40px;
+  margin: 0;
+  padding: 14px 40px 14px 0;
+  list-style: none;
+  animation: ticker 36s linear infinite;
+}
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+.ticker li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 600 18px/1 var(--font-display);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+@keyframes ticker {
+  to {
+    translate: -100%;
+  }
+}
+
+/* Scroll reveal: motion.tsx sets data-reveal on <html> and data-shown on each element. */
+[data-reveal] {
+  transition: opacity 0.8s var(--ease), translate 0.8s var(--ease);
+  transition-delay: calc(var(--i, 0) * 110ms);
+}
+html[data-reveal] [data-reveal]:not([data-shown]) {
+  opacity: 0;
+  translate: 0 40px;
+}
+.checks li[data-reveal] {
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+html[data-reveal] .checks li[data-reveal]:not([data-shown]) {
+  translate: -24px 0;
+}
+
+/* How-to-play pictures act out their step once revealed. */
+.how-tile {
+  display: block;
+  transition: opacity 0.3s, translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: calc(0.3s + var(--i) * 150ms);
+}
+html[data-reveal] .how li:not([data-shown]) .how-tile {
+  opacity: 0;
+  translate: 0 -36px;
+}
+.how-pawn {
+  transition: translate 0.9s var(--ease) 0.6s;
+}
+html[data-reveal] .how li:not([data-shown]) .how-pawn {
+  translate: -50px 0;
+}
+.how-star {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s, rotate 0.8s var(--ease) 0.8s;
+}
+html[data-reveal] .how li:not([data-shown]) .how-star {
+  scale: 0;
+  rotate: -180deg;
+}
+
+/* Series panels lift on hover; their corner decor keeps moving. */
+.series-panel {
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.8s var(--ease), translate 0.8s var(--ease), transform 0.3s var(--ease);
+  transition-delay: calc(var(--i, 0) * 110ms), calc(var(--i, 0) * 110ms), 0s;
+}
+.series-panel:hover {
+  transform: translateY(-6px) rotate(-0.6deg);
+}
+.series-panel:nth-child(2):hover {
+  transform: translateY(-6px) rotate(0.6deg);
+}
+.panel-decor {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 110px;
+  height: 110px;
+  overflow: visible;
+}
+.leaf {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: sway 3.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -1.1s);
+}
+.bubble {
+  animation: bubble 4.5s ease-in infinite;
+  animation-delay: calc(var(--i) * -1.1s);
+}
+@keyframes sway {
+  50% {
+    rotate: 14deg;
+  }
+}
+@keyframes bubble {
+  0% {
+    opacity: 0;
+    translate: 0 24px;
+  }
+  20%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -64px;
+  }
+}
+
+/* Recycling steps are joined by a dashed line that draws in as you scroll. */
+.process li {
+  position: relative;
+}
+.process li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 52px;
+  bottom: -20px;
+  left: 21px;
+  border-left: 2.5px dashed var(--ink-soft);
+  transform-origin: top;
+}
+@supports (animation-timeline: view()) {
+  .process li:not(:last-child)::after {
+    animation: grow-y linear both;
+    animation-timeline: view();
+    animation-range: entry 60% cover 55%;
+  }
+}
+@keyframes grow-y {
+  from {
+    scale: 1 0;
+  }
+}
+
+/* Product page: the tile floats over its color. */
+.product-glyph {
+  animation: float 5s ease-in-out infinite;
+}
+@keyframes float {
+  50% {
+    translate: 0 -14px;
+    rotate: -4deg;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  .btn,
-  .cb-tile {
-    transition: none;
+  .preloader,
+  .site-header::after {
+    display: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .hero .board-frame {
+    transform: none;
   }
 }

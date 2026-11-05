@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import { Glyph } from "@/components/glyph";
 import { EDITION_COLOR, PRODUCTS, formatIDR, product } from "@/lib/products";
@@ -37,7 +38,7 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
 
       <div className="product-top">
         <div className="product-visual" style={{ background: `var(${color})` }}>
-          <svg viewBox="-32 -32 64 64" width="40%" aria-hidden="true">
+          <svg className="product-glyph" viewBox="-32 -32 64 64" width="40%" aria-hidden="true">
             <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
             <Glyph k="maju" />
           </svg>
@@ -65,7 +66,7 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
       </div>
 
       <div className="product-details">
-        <section>
+        <section data-reveal>
           <h2>Isi set</h2>
           <ul className="checks">
             {p.contents.map((c) => (
@@ -73,7 +74,7 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
             ))}
           </ul>
         </section>
-        <section>
+        <section data-reveal style={{ "--i": 1 } as CSSProperties}>
           <h2>Tokoh dan habitat</h2>
           <ul className="animal-list">
             {p.animals.map((a) => (
@@ -86,7 +87,7 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
         </section>
       </div>
 
-      <Link href={`/produk/${other.slug}`} className="other-series" style={{ borderColor: `var(${EDITION_COLOR[other.edition]})` }}>
+      <Link href={`/produk/${other.slug}`} className="other-series" data-reveal style={{ borderColor: `var(${EDITION_COLOR[other.edition]})` }}>
         <span>Lihat juga</span>
         <strong>{other.name}</strong>
         <span>{other.tagline}</span>

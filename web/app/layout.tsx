@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Lexend, Unbounded } from "next/font/google";
+import { Preloader, ScrollReveal } from "@/components/motion";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -17,6 +18,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${unbounded.variable} ${lexend.variable}`}>
       <body>
+        <Preloader />
+        <ScrollReveal />
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />
