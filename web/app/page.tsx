@@ -94,6 +94,38 @@ function HowPicture({ step }: { step: number }) {
   );
 }
 
+// Section headings rise word by word from behind a mask when revealed.
+function Words({ text }: { text: string }) {
+  return text.split(" ").map((w, j) => (
+    <Fragment key={j}>
+      <span className="w">
+        <span style={{ "--j": j } as CSSProperties}>{w}</span>
+      </span>{" "}
+    </Fragment>
+  ));
+}
+
+// Recycled bottle caps drifting through the Daur ulang stage; --v sets speed and spin direction.
+const CAPS = [
+  { c: "--pink", x: "3%", y: "14%", s: 72, v: 1 },
+  { c: "--green", x: "96%", y: "22%", s: 56, v: -1.4 },
+  { c: "--yellow", x: "5%", y: "80%", s: 48, v: 0.8 },
+  { c: "--orange", x: "94%", y: "74%", s: 66, v: -0.6 },
+  { c: "--blue", x: "48%", y: "98%", s: 40, v: 1.2 },
+];
+function Caps() {
+  return (
+    <div className="caps" aria-hidden="true">
+      {CAPS.map((k) => (
+        <svg key={k.c} className="cap" viewBox="-32 -32 64 64" style={{ left: k.x, top: k.y, width: k.s, height: k.s, "--v": k.v } as CSSProperties}>
+          <circle r={28} fill={`var(${k.c})`} />
+          <circle r={18} fill="none" stroke="var(--ink)" strokeWidth={3} strokeDasharray="5 6" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 // Living corner of each series panel: leaves sway for the forest, bubbles rise for the sea.
 function PanelDecor({ edition }: { edition: "rimba" | "samudra" }) {
   return (
@@ -165,7 +197,9 @@ export default function Home() {
 
       <section id="cara-bermain" className="container section">
         <div className="section-head" data-reveal>
-          <h2>Cara bermain</h2>
+          <h2>
+            <Words text="Cara bermain" />
+          </h2>
           <p className="lead">Tiga langkah yang sama dengan cara programmer bekerja: menyusun, menjalankan, lalu memperbaiki.</p>
         </div>
         <ol className="how">
@@ -185,7 +219,9 @@ export default function Home() {
       <section id="seri" className="section stage stage-cream" data-scroll>
         <div className="container">
           <div className="section-head" data-reveal>
-            <h2>Dua seri, dua habitat</h2>
+            <h2>
+            <Words text="Dua seri, dua habitat" />
+          </h2>
             <p className="lead">Setiap seri membawa satwa Nusantara yang perlu kita jaga. Isi papan dan kepingnya sama; tokoh dan kartu misinya berbeda.</p>
           </div>
           <div className="series">
@@ -213,9 +249,12 @@ export default function Home() {
       </section>
 
       <section id="daur-ulang" className="section stage stage-ink" data-scroll>
+        <Caps />
         <div className="container split">
           <div className="section-head" data-reveal>
-            <h2>Dari tutup botol jadi keping perintah</h2>
+            <h2>
+            <Words text="Dari tutup botol jadi keping perintah" />
+          </h2>
             <p className="lead">Setiap keping klik-klak dicetak 3D dari plastik HDPE daur ulang. Anak belajar berpikir runtut, sampah plastik berkurang.</p>
           </div>
           <ol className="process">
@@ -235,7 +274,9 @@ export default function Home() {
       <section id="pelatihan" className="container section">
         <div className="split">
           <div className="section-head" data-reveal>
-            <h2>Pelatihan bersertifikat untuk guru PAUD</h2>
+            <h2>
+            <Words text="Pelatihan bersertifikat untuk guru PAUD" />
+          </h2>
             <p className="lead">
               Kami mendampingi guru agar percaya diri mengajarkan berpikir komputasional, yaitu cara berpikir runtut untuk memecahkan masalah, lewat
               permainan.
@@ -265,7 +306,9 @@ export default function Home() {
 
       <section id="testimoni" className="container section">
         <div className="section-head" data-reveal>
-          <h2>Kata guru dan orang tua</h2>
+          <h2>
+            <Words text="Kata guru dan orang tua" />
+          </h2>
         </div>
         <div className="quotes">
           {TESTIMONIALS.map((t, i) => (
