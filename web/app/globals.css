@@ -9,6 +9,8 @@
   --orange: #f29544;
   --orange-hover: #e8833a;
   --pink-deep: #b23a68;
+  --blue: #7cc4ec; /* Set Samudra */
+  --blue-deep: #1f6a96;
   --purple-deep: #8a3e96;
   --green-deep: #5e6b12;
   --yellow-deep: #8a6608;
@@ -530,12 +532,43 @@ button {
     center / 100% no-repeat;
 }
 
-/* Training photos */
+.split > .checks {
+  align-self: end; /* sits level with the end of the heading's lead, not stretched */
+}
+
+/* Training photos: one lead photo, two smaller beside it (below it on phones). */
 .docs {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: var(--s-lg) var(--s-md);
-  align-content: start;
+  margin-top: var(--s-xl);
+}
+.doc:first-child {
+  grid-column: 1 / -1;
+}
+.doc:first-child .photo-slot {
+  aspect-ratio: 16 / 10;
+}
+.doc:first-child figcaption {
+  font-size: 17px;
+}
+@media (min-width: 760px) {
+  .docs {
+    grid-template-columns: 2fr 1fr;
+    gap: var(--s-lg);
+    margin-top: var(--s-2xl);
+  }
+  .doc:first-child {
+    grid-column: auto;
+    grid-row: span 2;
+    display: flex;
+    flex-direction: column;
+  }
+  .doc:first-child .photo-slot {
+    flex: 1;
+    aspect-ratio: auto;
+    min-height: 420px;
+  }
 }
 .doc figcaption {
   display: grid;
@@ -550,7 +583,7 @@ button {
   display: grid;
   place-items: center;
   aspect-ratio: 4 / 3;
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   background: var(--cream);
   color: var(--ink-muted);
   font-size: 14px;
@@ -1138,7 +1171,8 @@ html[data-loaded] .hero-strip {
   position: absolute;
   width: var(--s);
   height: var(--s);
-  translate: calc(var(--px, 0) * var(--d) * 1px) calc(var(--py, 0) * var(--d) * 1px);
+  /* pointer drift, plus depth on scroll: pieces with a bigger |--d| travel further */
+  translate: calc(var(--px, 0) * var(--d) * 1px) calc(var(--py, 0) * var(--d) * 1px + var(--out, 0) * var(--d) * -6px);
   transition: translate 0.6s var(--ease);
   animation: bob 6s ease-in-out infinite;
 }
@@ -1219,8 +1253,9 @@ html[data-loaded] .piece:nth-child(4) {
 /* Ticker: a tilted ribbon of facts under the hero. Hover pauses it. */
 .ticker {
   display: flex;
-  width: 110%;
-  margin: var(--s-xl) 0 0 -5%;
+  width: calc(100% + 400px);
+  margin: var(--s-xl) 0 0 -200px;
+  translate: calc((var(--p, 0.5) - 0.5) * -240px) 0; /* drifts sideways as you scroll */
   overflow: hidden;
   border-block: var(--edge);
   background: var(--yellow);
@@ -1382,6 +1417,63 @@ html[data-reveal] .how li:not([data-shown]) .how-star {
   }
 }
 
+/* Hero parallax: as the hero scrolls away the copy lifts and fades, the board sinks back. */
+.hero-copy {
+  translate: 0 calc(var(--out, 0) * -140px);
+  opacity: calc(1 - var(--out, 0) * 1.1);
+}
+.hero-board {
+  translate: 0 calc(var(--out, 0) * 90px);
+  scale: calc(1 - var(--out, 0) * 0.1);
+}
+
+/* Stages: full-bleed sections that zoom in from a rounded card as they enter and ease
+   back a little as they leave. --in/--out come from ScrollScenes in motion.tsx. */
+.stage {
+  --k: max(1 - var(--in, 1), var(--out, 0) * 0.5);
+  --inset-x: 4%;
+  position: relative;
+  isolation: isolate;
+  margin-top: var(--s-2xl);
+  padding-block: var(--s-2xl);
+}
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--stage-bg);
+  clip-path: inset(calc(var(--k) * 48px) calc(var(--k) * var(--inset-x)) round calc(var(--k) * 72px));
+}
+.stage > .container {
+  scale: calc(1 - var(--k) * 0.06);
+  transform-origin: 50% 0;
+}
+.stage-cream {
+  --stage-bg: var(--cream);
+}
+.stage-ink {
+  --stage-bg: var(--ink);
+  color: var(--white);
+}
+.stage-ink .lead,
+.stage-ink .process p {
+  color: rgba(255, 255, 255, 0.72);
+}
+.stage-ink .process li {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.stage-ink .process li::after {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+@media (min-width: 900px) {
+  .stage {
+    --inset-x: 8%;
+    margin-top: var(--s-3xl);
+    padding-block: var(--s-3xl);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1396,7 +1488,19 @@ html[data-reveal] .how li:not([data-shown]) .how-star {
     animation: none !important;
     transition: none !important;
   }
-  .hero .board-frame {
+  .hero .board-frame,
+  .stage > .container {
     transform: none;
+    scale: none;
+  }
+  .hero-copy,
+  .hero-board,
+  .ticker {
+    translate: none;
+    scale: none;
+    opacity: 1;
+  }
+  .stage::before {
+    clip-path: none;
   }
 }

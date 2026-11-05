@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Lexend, Unbounded } from "next/font/google";
-import { Preloader, ScrollReveal } from "@/components/motion";
+import { Preloader, ScrollReveal, ScrollScenes } from "@/components/motion";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
@@ -20,6 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body>
         <Preloader />
         <ScrollReveal />
+        <ScrollScenes />
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />

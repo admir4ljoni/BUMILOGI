@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { LOOP_TIMES, MAX_TILES, MISSIONS, SIZE, run, tileCount, type At, type Block, type Cmd, type Loop, type Mission, type Pose } from "@/lib/board";
+import { EDITION_COLOR } from "@/lib/products";
 import { Glyph } from "./glyph";
 
 const CMDS: { k: Cmd; label: string; color: string }[] = [
@@ -11,8 +12,7 @@ const CMDS: { k: Cmd; label: string; color: string }[] = [
   { k: "kanan", label: "Belok Kanan", color: "--purple" },
 ];
 export const CMD = Object.fromEntries(CMDS.map((c) => [c.k, c])) as Record<Cmd, (typeof CMDS)[number]>;
-const PAWN = { rimba: "--green", samudra: "--pink" } as const;
-const CONFETTI = ["--orange", "--purple", "--green", "--yellow", "--pink"];
+const CONFETTI = ["--orange", "--purple", "--green", "--yellow", "--pink", "--blue"];
 
 const TOAST = {
   collision: { text: "Ups, ada rintangan! Debug & coba lagi.", bg: "--pink" },
@@ -111,7 +111,7 @@ export function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble
   ctx.fill();
   ctx.beginPath();
   ctx.arc(0, 0, R, 0, Math.PI * 2);
-  ctx.fillStyle = css(PAWN[m.edition]);
+  ctx.fillStyle = css(EDITION_COLOR[m.edition]);
   ctx.fill();
   ctx.lineWidth = 6;
   ctx.strokeStyle = ink;
@@ -354,7 +354,7 @@ export function CodingBoard({ head }: { head: ReactNode }) {
             ))}
           </div>
           <div className="cb-brief">
-            <span className="chip" style={{ background: `var(${PAWN[mission.edition]})` }}>
+            <span className="chip" style={{ background: `var(${EDITION_COLOR[mission.edition]})` }}>
               Seri {mission.edition}
             </span>
             <h2 className="card-title">
