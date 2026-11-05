@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fragment, type CSSProperties } from "react";
 import { Glyph, type Cmd } from "@/components/glyph";
 import { HeroBoard } from "@/components/hero-board";
 import { EDITION_COLOR, PRODUCTS, SHOPEE_URL, formatIDR } from "@/lib/products";
@@ -44,6 +45,13 @@ const TESTIMONIALS = [
   { quote: "Pelatihannya praktis. Besoknya saya langsung bisa memakai kartu misi di kelas.", who: "Guru PAUD, Karanganyar" },
 ];
 
+// The ticker under the hero: plain facts about the toy, separated by small tiles.
+const FACTS = ["Tanpa layar", "Usia 4–6 tahun", "Plastik daur ulang", "Papan 6×6", "Satwa Nusantara", "Pelatihan guru PAUD"];
+const FACT_TILES: Cmd[] = ["maju", "kanan", "kiri"];
+
+/** Stagger index for [data-reveal] children. */
+const nth = (i: number) => ({ "--i": i }) as CSSProperties;
+
 const TILE_COLOR: Record<Cmd, string> = { maju: "--orange", kiri: "--purple", kanan: "--purple" };
 
 function Tile({ k, size = 48 }: { k: Cmd; size?: number }) {
@@ -61,7 +69,9 @@ function HowPicture({ step }: { step: number }) {
     return (
       <div className="how-pic">
         {(["maju", "kanan", "maju"] as const).map((k, i) => (
-          <Tile key={i} k={k} size={60} />
+          <span key={i} className="how-tile" style={nth(i)}>
+            <Tile k={k} size={60} />
+          </span>
         ))}
       </div>
     );
@@ -71,16 +81,42 @@ function HowPicture({ step }: { step: number }) {
         {[0, 1, 2].map((i) => (
           <rect key={i} x={2 + i * 50} y={2} width={44} height={44} rx={10} fill={step === 2 && i === 2 ? "var(--yellow)" : "var(--cream)"} stroke="var(--line)" strokeWidth={2} />
         ))}
-        {step === 2 && <path d="M124 11l3.6 7.3 8 1.2-5.8 5.6 1.4 8-7.2-3.8-7.2 3.8 1.4-8-5.8-5.6 8-1.2z" fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />}
-        <g transform={`translate(${step === 1 ? 74 : 24} 24)`}>
+        {step === 2 && <path className="how-star" d="M124 11l3.6 7.3 8 1.2-5.8 5.6 1.4 8-7.2-3.8-7.2 3.8 1.4-8-5.8-5.6 8-1.2z" fill="none" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />}
+        <g className={step === 1 ? "how-pawn" : undefined} transform={`translate(${step === 1 ? 74 : 24} 24)`}>
           <path d="M8-6 18 0 8 6z" fill="var(--ink)" />
           <circle r={13} fill="var(--green)" stroke="var(--ink)" strokeWidth={2.5} />
           <circle cx={4} cy={-5} r={2} fill="var(--ink)" />
           <circle cx={4} cy={5} r={2} fill="var(--ink)" />
         </g>
-        {step === 1 && <path d="M30 24h22" stroke="var(--ink)" strokeWidth={2.5} strokeDasharray="3 5" strokeLinecap="round" />}
+        {step === 1 && <path className="how-trail" d="M30 24h22" stroke="var(--ink)" strokeWidth={2.5} strokeDasharray="3 5" strokeLinecap="round" />}
       </svg>
     </div>
+  );
+}
+
+// Living corner of each series panel: leaves sway for the forest, bubbles rise for the sea.
+function PanelDecor({ edition }: { edition: "rimba" | "samudra" }) {
+  return (
+    <svg className={`panel-decor panel-decor-${edition}`} viewBox="0 0 120 120" aria-hidden="true">
+      {edition === "rimba"
+        ? [
+            [40, 70, -30],
+            [70, 50, 10],
+            [92, 78, 45],
+          ].map(([x, y, r], i) => (
+            <g key={i} transform={`translate(${x} ${y}) rotate(${r})`}>
+              <path className="leaf" style={nth(i)} d="M0 22C-16 8-14-14 0-24 14-14 16 8 0 22ZM0 20V-14" fill="var(--white)" stroke="var(--ink)" strokeWidth={2.5} strokeLinejoin="round" />
+            </g>
+          ))
+        : [
+            [36, 90, 12],
+            [70, 100, 8],
+            [90, 80, 15],
+            [56, 70, 6],
+          ].map(([x, y, r], i) => (
+            <circle key={i} className="bubble" style={nth(i)} cx={x} cy={y} r={r} fill="var(--white)" stroke="var(--ink)" strokeWidth={2.5} />
+          ))}
+    </svg>
   );
 }
 
@@ -89,7 +125,15 @@ export default function Home() {
     <>
       <section className="container hero">
         <div className="hero-copy">
-          <h1>Belajar koding, tanpa layar.</h1>
+          <h1>
+            {"Belajar koding, tanpa layar.".split(" ").map((w, i) => (
+              <Fragment key={i}>
+                <span className="hero-word" style={nth(i)}>
+                  {w}
+                </span>{" "}
+              </Fragment>
+            ))}
+          </h1>
           <p className="lead">
             klik-klak adalah mainan koding untuk anak 4–6 tahun. Anak menyusun keping perintah dari plastik daur ulang, lalu menggerakkan tokoh
             satwa di papan sampai ke bintang.
@@ -106,14 +150,27 @@ export default function Home() {
         <HeroBoard />
       </section>
 
+      <div className="ticker">
+        {[0, 1].map((copy) => (
+          <ul key={copy} className="ticker-track" aria-hidden={copy === 1 || undefined}>
+            {FACTS.map((f, i) => (
+              <li key={f}>
+                <Tile k={FACT_TILES[i % 3]} size={30} />
+                {f}
+              </li>
+            ))}
+          </ul>
+        ))}
+      </div>
+
       <section id="cara-bermain" className="container section">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <h2>Cara bermain</h2>
           <p className="lead">Tiga langkah yang sama dengan cara programmer bekerja: menyusun, menjalankan, lalu memperbaiki.</p>
         </div>
         <ol className="how">
           {HOW.map((s, i) => (
-            <li key={s.title}>
+            <li key={s.title} data-reveal style={nth(i)}>
               <HowPicture step={i} />
               <h3>
                 <span className="how-num">{i + 1}</span>
@@ -126,13 +183,20 @@ export default function Home() {
       </section>
 
       <section id="seri" className="container section">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <h2>Dua seri, dua habitat</h2>
           <p className="lead">Setiap seri membawa satwa Nusantara yang perlu kita jaga. Isi papan dan kepingnya sama; tokoh dan kartu misinya berbeda.</p>
         </div>
         <div className="series">
-          {PRODUCTS.map((p) => (
-            <Link key={p.slug} href={`/produk/${p.slug}`} className="series-panel" style={{ background: `var(${EDITION_COLOR[p.edition]})` }}>
+          {PRODUCTS.map((p, i) => (
+            <Link
+              key={p.slug}
+              href={`/produk/${p.slug}`}
+              className="series-panel"
+              data-reveal
+              style={{ ...nth(i), background: `var(${EDITION_COLOR[p.edition]})` }}
+            >
+              <PanelDecor edition={p.edition} />
               <span className="series-habitat">{p.tagline}</span>
               <h3>{p.name}</h3>
               <p>{p.description}</p>
@@ -147,13 +211,13 @@ export default function Home() {
       </section>
 
       <section id="daur-ulang" className="container section split">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <h2>Dari tutup botol jadi keping perintah</h2>
           <p className="lead">Setiap keping klik-klak dicetak 3D dari plastik HDPE daur ulang. Anak belajar berpikir runtut, sampah plastik berkurang.</p>
         </div>
         <ol className="process">
           {RECYCLING.map((s, i) => (
-            <li key={s.title}>
+            <li key={s.title} data-reveal style={nth(i)}>
               <span className="process-num">{i + 1}</span>
               <div>
                 <h3>{s.title}</h3>
@@ -165,21 +229,23 @@ export default function Home() {
       </section>
 
       <section id="pelatihan" className="container section split">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <h2>Pelatihan bersertifikat untuk guru PAUD</h2>
           <p className="lead">
             Kami mendampingi guru agar percaya diri mengajarkan berpikir komputasional, yaitu cara berpikir runtut untuk memecahkan masalah, lewat
             permainan.
           </p>
           <ul className="checks">
-            {TRAINING.map((t) => (
-              <li key={t}>{t}</li>
+            {TRAINING.map((t, i) => (
+              <li key={t} data-reveal style={nth(i + 1)}>
+                {t}
+              </li>
             ))}
           </ul>
         </div>
         <div className="docs">
-          {TRAINING_DOCS.map((d) => (
-            <figure key={d.title} className="doc">
+          {TRAINING_DOCS.map((d, i) => (
+            <figure key={d.title} className="doc" data-reveal style={nth(i)}>
               <div className="photo-slot">Foto kegiatan</div>
               <figcaption>
                 <strong>{d.title}</strong>
@@ -191,12 +257,12 @@ export default function Home() {
       </section>
 
       <section id="testimoni" className="container section">
-        <div className="section-head">
+        <div className="section-head" data-reveal>
           <h2>Kata guru dan orang tua</h2>
         </div>
         <div className="quotes">
-          {TESTIMONIALS.map((t) => (
-            <figure key={t.who} className="quote">
+          {TESTIMONIALS.map((t, i) => (
+            <figure key={t.who} className="quote" data-reveal style={nth(i)}>
               <blockquote>{t.quote}</blockquote>
               <figcaption>{t.who}</figcaption>
             </figure>
