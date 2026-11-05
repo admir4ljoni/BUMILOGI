@@ -51,3 +51,30 @@ test("every mission is solvable within the tile limit", () => {
     expect(m.obstacles.some(([x, y]) => (x === m.target.x && y === m.target.y) || (x === m.start.x && y === m.start.y))).toBe(false);
   });
 });
+
+// Fewest tiles needed without Ulangi, by breadth-first search over (x, y, dir).
+// A child who hasn't discovered loops yet must still be able to finish every mission.
+function shortestWithoutLoops(m: Mission): number {
+  const seen = new Set<string>();
+  let frontier: Block[][] = [[]];
+  for (let len = 1; len <= 30; len++) {
+    const next: Block[][] = [];
+    for (const prog of frontier)
+      for (const c of ["maju", "mundur", "kiri", "kanan"] as const) {
+        const p = [...prog, c];
+        const r = run(m, p);
+        if (r.outcome === "success") return len;
+        if (r.outcome === "collision") continue;
+        const end = r.steps.at(-1)!.pose;
+        const k = `${end.x},${end.y},${end.dir}`;
+        if (!seen.has(k)) seen.add(k), next.push(p);
+      }
+    frontier = next;
+  }
+  return Infinity;
+}
+
+test("every mission fits the tile limit even without loops", () => {
+  const need = MISSIONS.map(shortestWithoutLoops);
+  need.forEach((n, k) => expect([k, n <= MAX_TILES]).toEqual([k, true]));
+});
