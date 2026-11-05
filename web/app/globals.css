@@ -1018,11 +1018,28 @@ main {
   justify-items: center;
   gap: var(--s-lg);
   background: var(--white);
-  box-shadow: 0 10px 0 var(--ink);
+  box-shadow: 0 10px 0 var(--ink), 0 -10px 0 var(--ink);
   animation: preloader-out 0.7s var(--ease) 5s forwards; /* no-JS fallback */
+}
+@keyframes preloader-in {
+  from {
+    translate: 0 calc(100% + 12px);
+    visibility: visible;
+  }
+  to {
+    translate: 0 0;
+    visibility: visible;
+  }
 }
 html[data-loaded] .preloader {
   animation: preloader-out 0.8s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+/* Page transitions (motion.tsx); must follow the rule above: slide back up over the page, then lift off the new one. */
+html[data-nav="cover"] .preloader {
+  animation: preloader-in 0.55s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+html[data-nav="reveal"] .preloader {
+  animation: preloader-out 0.8s cubic-bezier(0.76, 0, 0.24, 1) both;
 }
 @keyframes preloader-out {
   to {
@@ -1103,20 +1120,20 @@ html[data-loaded] .preloader {
 .hero-word {
   display: inline-block;
 }
-html[data-loaded] .hero-word {
+html[data-loaded]:not([data-nav="cover"]) .hero-word {
   animation: word-in 0.8s var(--ease) both;
   animation-delay: calc(0.35s + var(--i) * 90ms);
 }
-html[data-loaded] .hero-copy > :not(h1) {
+html[data-loaded]:not([data-nav="cover"]) .hero-copy > :not(h1) {
   animation: rise 0.8s var(--ease) 0.75s both;
 }
-html[data-loaded] .hero-copy > .actions {
+html[data-loaded]:not([data-nav="cover"]) .hero-copy > .actions {
   animation-delay: 0.9s;
 }
-html[data-loaded] .hero-board .board-frame {
+html[data-loaded]:not([data-nav="cover"]) .hero-board .board-frame {
   animation: board-in 1s cubic-bezier(0.34, 1.4, 0.64, 1) 0.45s both;
 }
-html[data-loaded] .hero-strip {
+html[data-loaded]:not([data-nav="cover"]) .hero-strip {
   animation: rise 0.6s var(--ease) 0.9s both;
 }
 @keyframes word-in {
@@ -1203,17 +1220,17 @@ html[data-loaded] .hero-strip {
   right: -20px;
   animation-delay: -1s;
 }
-html[data-loaded] .piece {
+html[data-loaded]:not([data-nav="cover"]) .piece {
   animation: piece-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both, bob 6s ease-in-out infinite;
   animation-delay: 1.1s, 0s;
 }
-html[data-loaded] .piece:nth-child(2) {
+html[data-loaded]:not([data-nav="cover"]) .piece:nth-child(2) {
   animation-delay: 1.2s, -2s;
 }
-html[data-loaded] .piece:nth-child(3) {
+html[data-loaded]:not([data-nav="cover"]) .piece:nth-child(3) {
   animation-delay: 1.3s, -4s;
 }
-html[data-loaded] .piece:nth-child(4) {
+html[data-loaded]:not([data-nav="cover"]) .piece:nth-child(4) {
   animation-delay: 1.4s, -1s;
 }
 @keyframes bob {
@@ -1289,7 +1306,9 @@ html[data-loaded] .piece:nth-child(4) {
 
 /* Scroll reveal: motion.tsx sets data-reveal on <html> and data-shown on each element. */
 [data-reveal] {
-  transition: opacity 0.8s var(--ease), translate 0.8s var(--ease);
+  transition-property: opacity, translate, scale, rotate;
+  transition-duration: 0.9s;
+  transition-timing-function: var(--ease);
   transition-delay: calc(var(--i, 0) * 110ms);
 }
 html[data-reveal] [data-reveal]:not([data-shown]) {
@@ -1330,17 +1349,49 @@ html[data-reveal] .how li:not([data-shown]) .how-star {
 }
 
 /* Series panels lift on hover; their corner decor keeps moving. */
+/* --hy/--hr are registered so the hover lift animates while the scroll drift stays instant. */
+@property --hy {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --hr {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.series {
+  perspective: 1400px;
+}
 .series-panel {
   position: relative;
   overflow: hidden;
-  transition: opacity 0.8s var(--ease), translate 0.8s var(--ease), transform 0.3s var(--ease);
-  transition-delay: calc(var(--i, 0) * 110ms), calc(var(--i, 0) * 110ms), 0s;
+  transform-origin: 50% 100%;
+  transform: translateY(calc(var(--drift, 0px) + var(--hy))) rotate(var(--hr));
+  transition-property: opacity, translate, rotate, --hy, --hr;
+  transition-duration: 1s, 1s, 1s, 0.3s, 0.3s;
+  transition-timing-function: var(--ease);
+  transition-delay: calc(var(--i, 0) * 150ms), calc(var(--i, 0) * 150ms), calc(var(--i, 0) * 150ms), 0s, 0s;
 }
 .series-panel:hover {
-  transform: translateY(-6px) rotate(-0.6deg);
+  --hy: -8px;
+  --hr: -0.8deg;
 }
 .series-panel:nth-child(2):hover {
-  transform: translateY(-6px) rotate(0.6deg);
+  --hr: 0.8deg;
+}
+html[data-reveal] .series-panel[data-reveal]:not([data-shown]) {
+  translate: 0 120px;
+  rotate: x 40deg;
+}
+@media (min-width: 760px) {
+  /* the two panels drift at different speeds through the stage */
+  .stage .series-panel {
+    --drift: calc((0.5 - var(--p, 0.5)) * 50px);
+  }
+  .stage .series-panel:nth-child(2) {
+    --drift: calc((0.5 - var(--p, 0.5)) * 160px);
+  }
 }
 .panel-decor {
   position: absolute;
@@ -1403,6 +1454,106 @@ html[data-reveal] .how li:not([data-shown]) .how-star {
 @keyframes grow-y {
   from {
     scale: 1 0;
+  }
+}
+
+/* Headings rise word by word from behind a mask; the lead follows. */
+.w {
+  display: inline-block;
+  overflow: clip;
+  padding-bottom: 0.14em; /* room for descenders inside the mask */
+  margin-bottom: -0.14em;
+  vertical-align: bottom;
+}
+.w > span {
+  display: inline-block;
+  transition: translate 0.9s var(--ease), rotate 0.9s var(--ease);
+  transition-delay: calc(var(--j) * 70ms);
+}
+html[data-reveal] [data-reveal]:not([data-shown]) .w > span {
+  translate: 0 115%;
+  rotate: 8deg;
+}
+html[data-reveal] .section-head[data-reveal]:not([data-shown]) {
+  opacity: 1;
+  translate: none;
+}
+.section-head .lead {
+  transition: opacity 0.8s var(--ease) 0.35s, translate 0.8s var(--ease) 0.35s;
+}
+html[data-reveal] .section-head:not([data-shown]) .lead {
+  opacity: 0;
+  translate: 0 24px;
+}
+
+/* Recycling steps slide in from the side; the photos wipe up and settle from a zoom. */
+html[data-reveal] .process li[data-reveal]:not([data-shown]) {
+  translate: 80px 0;
+}
+.doc .photo-slot {
+  transition: clip-path 1.1s var(--ease), scale 1.4s var(--ease);
+  transition-delay: calc(var(--i, 0) * 150ms);
+}
+html[data-reveal] .doc[data-reveal]:not([data-shown]) .photo-slot {
+  clip-path: inset(100% 0 0 0 round var(--r-lg));
+  scale: 1.15;
+}
+
+/* Quotes pop in at a tilt, each under a big colored quote mark. */
+html[data-reveal] .quote[data-reveal]:not([data-shown]) {
+  scale: 0.85;
+  rotate: -4deg;
+}
+html[data-reveal] .quote[data-reveal]:nth-child(2):not([data-shown]) {
+  rotate: 4deg;
+}
+.quote blockquote::before {
+  content: "\201C";
+  display: block;
+  height: 0.5em;
+  font: 700 80px/1 var(--font-display);
+  color: var(--orange);
+}
+.quote:nth-child(2) blockquote::before {
+  color: var(--green);
+}
+.quote:nth-child(3) blockquote::before {
+  color: var(--blue);
+}
+
+/* Bottle caps drifting and spinning through the Daur ulang stage as you scroll. */
+.caps {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: clip;
+  pointer-events: none;
+}
+.cap {
+  position: absolute;
+  translate: -50% calc(-50% + (0.5 - var(--p, 0.5)) * var(--v) * 260px);
+  rotate: calc(var(--p, 0.5) * var(--v) * 540deg);
+}
+@media (max-width: 899px) {
+  .caps {
+    display: none;
+  }
+}
+
+/* Footer curtain (desktop): the page lifts off the footer like a card. Phones keep a
+   normal footer, since a sticky one taller than the screen would hide its top. */
+@media (min-width: 900px) and (min-height: 760px) {
+  main {
+    position: relative;
+    z-index: 1;
+    padding-bottom: var(--s-3xl);
+    border-radius: 0 0 56px 56px;
+    background: var(--white);
+  }
+  .site-footer {
+    position: sticky;
+    bottom: 0;
+    margin-top: 0;
   }
 }
 

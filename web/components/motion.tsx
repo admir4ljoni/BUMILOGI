@@ -1,7 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useEffect, type CSSProperties } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { Glyph, type Cmd } from "./glyph";
 
 const LOADER_TILES: [Cmd, string][] = [
@@ -14,13 +14,60 @@ const LOADER_TILES: [Cmd, string][] = [
 // Full-screen loader on the first page load: tiles click into a row until the page has
 // loaded (and at least ~1.4s have passed), then it slides up. `data-loaded` on <html>
 // also starts the hero's entrance. Without JS a CSS fallback hides it after 5s.
+// It doubles as the page transition: an internal link click slides it back up over the
+// page (data-nav="cover"), navigates underneath, then lifts it again (data-nav="reveal").
+// Next's <Link> skips its own navigation when the click is already defaultPrevented.
 export function Preloader() {
+  const router = useRouter();
+  const path = usePathname();
+  const pending = useRef(false);
+  const navId = useRef(0);
+  const shownPath = useRef(path);
+
   useEffect(() => {
     const finish = () =>
       setTimeout(() => (document.documentElement.dataset.loaded = ""), Math.max(0, 1400 - performance.now()));
     if (document.readyState === "complete") finish();
     else addEventListener("load", finish, { once: true });
   }, []);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element).closest?.("a");
+      if (!a || a.target || a.hasAttribute("download") || a.origin !== location.origin) return;
+      if (a.pathname === location.pathname || pending.current) return; // same page: let #hash links just scroll
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      e.preventDefault();
+      pending.current = true;
+      html.dataset.nav = "cover";
+      setTimeout(() => router.push(a.pathname + a.search + a.hash), 550);
+      const id = ++navId.current;
+      setTimeout(() => {
+        if (pending.current && navId.current === id) reveal(); // navigation never landed: don't leave the page covered
+      }, 6000);
+    };
+    const reveal = () => {
+      pending.current = false;
+      html.dataset.nav = "reveal";
+      setTimeout(() => {
+        if (html.dataset.nav === "reveal") delete html.dataset.nav;
+      }, 900);
+    };
+    document.addEventListener("click", onClick, true);
+    // The new page has rendered under the cover: hold the tiles a beat, then lift.
+    if (pending.current && path !== shownPath.current) {
+      shownPath.current = path;
+      const t = setTimeout(reveal, 450);
+      return () => {
+        clearTimeout(t);
+        document.removeEventListener("click", onClick, true);
+      };
+    }
+    shownPath.current = path;
+    return () => document.removeEventListener("click", onClick, true);
+  }, [path, router]);
 
   return (
     <div className="preloader" aria-hidden="true">
