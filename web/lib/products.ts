@@ -57,7 +57,7 @@ export const PRODUCTS: Product[] = [
 
 export const product = (slug: string) => PRODUCTS.find((p) => p.slug === slug);
 
-export const EDITION_COLOR = { rimba: "--green", samudra: "--pink" } as const;
+export const EDITION_COLOR = { rimba: "--green", samudra: "--blue" } as const;
 
 export function formatIDR(n: number) {
   return "Rp " + n.toLocaleString("id-ID");

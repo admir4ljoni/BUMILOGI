@@ -59,3 +59,41 @@ export function ScrollReveal() {
   }, [path]);
   return null;
 }
+
+// Scroll-linked scenes: each [data-scroll] element gets, every frame it moves,
+//   --in   0→1 as its top travels from the viewport bottom to 30% from the top,
+//   --out  0→1 as its bottom travels from the viewport bottom to the top,
+//   --p    0→1 across its whole pass through the viewport.
+// The CSS turns these into the hero parallax and the zooming section stages.
+export function ScrollScenes() {
+  const path = usePathname();
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const els = [...document.querySelectorAll<HTMLElement>("[data-scroll]")];
+    if (!els.length) return;
+    const clamp = (n: number) => Math.min(1, Math.max(0, n)).toFixed(3);
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const vh = innerHeight;
+      for (const el of els) {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty("--in", clamp((vh - r.top) / (vh * 0.7)));
+        el.style.setProperty("--out", clamp(1 - r.bottom / vh));
+        el.style.setProperty("--p", clamp((vh - r.top) / (vh + r.height)));
+      }
+    };
+    const onScroll = () => {
+      raf ||= requestAnimationFrame(update);
+    };
+    update();
+    addEventListener("scroll", onScroll, { passive: true });
+    addEventListener("resize", onScroll);
+    return () => {
+      removeEventListener("scroll", onScroll);
+      removeEventListener("resize", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [path]);
+  return null;
+}

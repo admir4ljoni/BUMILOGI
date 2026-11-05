@@ -123,7 +123,7 @@ function PanelDecor({ edition }: { edition: "rimba" | "samudra" }) {
 export default function Home() {
   return (
     <>
-      <section className="container hero">
+      <section className="container hero" data-scroll>
         <div className="hero-copy">
           <h1>
             {"Belajar koding, tanpa layar.".split(" ").map((w, i) => (
@@ -150,7 +150,7 @@ export default function Home() {
         <HeroBoard />
       </section>
 
-      <div className="ticker">
+      <div className="ticker" data-scroll>
         {[0, 1].map((copy) => (
           <ul key={copy} className="ticker-track" aria-hidden={copy === 1 || undefined}>
             {FACTS.map((f, i) => (
@@ -182,59 +182,65 @@ export default function Home() {
         </ol>
       </section>
 
-      <section id="seri" className="container section">
-        <div className="section-head" data-reveal>
-          <h2>Dua seri, dua habitat</h2>
-          <p className="lead">Setiap seri membawa satwa Nusantara yang perlu kita jaga. Isi papan dan kepingnya sama; tokoh dan kartu misinya berbeda.</p>
-        </div>
-        <div className="series">
-          {PRODUCTS.map((p, i) => (
-            <Link
-              key={p.slug}
-              href={`/produk/${p.slug}`}
-              className="series-panel"
-              data-reveal
-              style={{ ...nth(i), background: `var(${EDITION_COLOR[p.edition]})` }}
-            >
-              <PanelDecor edition={p.edition} />
-              <span className="series-habitat">{p.tagline}</span>
-              <h3>{p.name}</h3>
-              <p>{p.description}</p>
-              <p className="series-animals">{p.animals.join(", ")}</p>
-              <span className="series-foot">
-                <strong>{formatIDR(p.price_idr)}</strong>
-                <span className="series-link">Lihat isi set</span>
-              </span>
-            </Link>
-          ))}
+      <section id="seri" className="section stage stage-cream" data-scroll>
+        <div className="container">
+          <div className="section-head" data-reveal>
+            <h2>Dua seri, dua habitat</h2>
+            <p className="lead">Setiap seri membawa satwa Nusantara yang perlu kita jaga. Isi papan dan kepingnya sama; tokoh dan kartu misinya berbeda.</p>
+          </div>
+          <div className="series">
+            {PRODUCTS.map((p, i) => (
+              <Link
+                key={p.slug}
+                href={`/produk/${p.slug}`}
+                className="series-panel"
+                data-reveal
+                style={{ ...nth(i), background: `var(${EDITION_COLOR[p.edition]})` }}
+              >
+                <PanelDecor edition={p.edition} />
+                <span className="series-habitat">{p.tagline}</span>
+                <h3>{p.name}</h3>
+                <p>{p.description}</p>
+                <p className="series-animals">{p.animals.join(", ")}</p>
+                <span className="series-foot">
+                  <strong>{formatIDR(p.price_idr)}</strong>
+                  <span className="series-link">Lihat isi set</span>
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section id="daur-ulang" className="container section split">
-        <div className="section-head" data-reveal>
-          <h2>Dari tutup botol jadi keping perintah</h2>
-          <p className="lead">Setiap keping klik-klak dicetak 3D dari plastik HDPE daur ulang. Anak belajar berpikir runtut, sampah plastik berkurang.</p>
+      <section id="daur-ulang" className="section stage stage-ink" data-scroll>
+        <div className="container split">
+          <div className="section-head" data-reveal>
+            <h2>Dari tutup botol jadi keping perintah</h2>
+            <p className="lead">Setiap keping klik-klak dicetak 3D dari plastik HDPE daur ulang. Anak belajar berpikir runtut, sampah plastik berkurang.</p>
+          </div>
+          <ol className="process">
+            {RECYCLING.map((s, i) => (
+              <li key={s.title} data-reveal style={nth(i)}>
+                <span className="process-num">{i + 1}</span>
+                <div>
+                  <h3>{s.title}</h3>
+                  <p>{s.text}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
-        <ol className="process">
-          {RECYCLING.map((s, i) => (
-            <li key={s.title} data-reveal style={nth(i)}>
-              <span className="process-num">{i + 1}</span>
-              <div>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
       </section>
 
-      <section id="pelatihan" className="container section split">
-        <div className="section-head" data-reveal>
-          <h2>Pelatihan bersertifikat untuk guru PAUD</h2>
-          <p className="lead">
-            Kami mendampingi guru agar percaya diri mengajarkan berpikir komputasional, yaitu cara berpikir runtut untuk memecahkan masalah, lewat
-            permainan.
-          </p>
+      <section id="pelatihan" className="container section">
+        <div className="split">
+          <div className="section-head" data-reveal>
+            <h2>Pelatihan bersertifikat untuk guru PAUD</h2>
+            <p className="lead">
+              Kami mendampingi guru agar percaya diri mengajarkan berpikir komputasional, yaitu cara berpikir runtut untuk memecahkan masalah, lewat
+              permainan.
+            </p>
+          </div>
           <ul className="checks">
             {TRAINING.map((t, i) => (
               <li key={t} data-reveal style={nth(i + 1)}>
@@ -243,6 +249,7 @@ export default function Home() {
             ))}
           </ul>
         </div>
+        {/* Photos are the proof here, so they get the width: one lead photo, two beside it. */}
         <div className="docs">
           {TRAINING_DOCS.map((d, i) => (
             <figure key={d.title} className="doc" data-reveal style={nth(i)}>
