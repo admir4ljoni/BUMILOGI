@@ -23,7 +23,7 @@ export type Mission = {
 };
 
 export const SIZE = 6; // the physical board is 6×6
-export const MAX_TILES = 12;
+export const MAX_TILES = 16; // room for a non-optimal route; the hardest mission needs 13 without loops
 export const LOOP_TIMES = [2, 3, 4, 5];
 
 const DELTA: [number, number][] = [
