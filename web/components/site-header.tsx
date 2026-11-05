@@ -6,8 +6,8 @@ import { Logo, SECTIONS } from "./logo";
 
 export function SiteHeader() {
   return (
-    <header className="container site-header">
-      <nav className="nav" aria-label="Utama">
+    <header className="site-header">
+      <nav className="container nav" aria-label="Utama">
         <Link href="/" className="nav-logo" aria-label="BUMILOGI, ke beranda">
           <Logo />
         </Link>
@@ -15,29 +15,19 @@ export function SiteHeader() {
         <ul className="nav-links">
           {SECTIONS.map((s) => (
             <li key={s.href}>
-              <Link href={s.href} className="nav-link label" style={{ "--dot": `var(${s.color})` } as React.CSSProperties}>
-                {s.label}
-              </Link>
+              <Link href={s.href}>{s.label}</Link>
             </li>
           ))}
         </ul>
 
-        <div className="nav-actions">
-          <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary nav-cta">
-            Beli di Shopee
-          </a>
-          <button type="button" className="icon-btn nav-menu-btn" popoverTarget="nav-menu" aria-label="Buka menu">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="M4 7h16M4 12h16M4 17h10" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Scroll progress: a mini pawn drives along the bar's bottom edge (CSS scroll timeline). */}
-        <div className="nav-track" aria-hidden="true">
-          <span className="nav-track-fill" />
-          <span className="nav-pawn" />
-        </div>
+        <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
+          Beli di Shopee
+        </a>
+        <button type="button" className="icon-btn nav-menu-btn" popoverTarget="nav-menu" aria-label="Buka menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
       </nav>
 
       {/* Native popover: light-dismiss and Esc for free; links close it on click. */}
@@ -50,10 +40,7 @@ export function SiteHeader() {
         <ul>
           {SECTIONS.map((s) => (
             <li key={s.href}>
-              <Link href={s.href} className="nav-menu-link">
-                <span className="nav-menu-dot" style={{ background: `var(${s.color})` }} />
-                {s.label}
-              </Link>
+              <Link href={s.href}>{s.label}</Link>
             </li>
           ))}
         </ul>

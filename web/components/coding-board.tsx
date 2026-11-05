@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { LOOP_TIMES, MAX_TILES, MISSIONS, SIZE, run, tileCount, type At, type Block, type Cmd, type Loop, type Mission, type Pose } from "@/lib/board";
 import { Glyph } from "./glyph";
 
@@ -10,7 +10,7 @@ const CMDS: { k: Cmd; label: string; color: string }[] = [
   { k: "kiri", label: "Belok Kiri", color: "--purple" },
   { k: "kanan", label: "Belok Kanan", color: "--purple" },
 ];
-const CMD = Object.fromEntries(CMDS.map((c) => [c.k, c])) as Record<Cmd, (typeof CMDS)[number]>;
+export const CMD = Object.fromEntries(CMDS.map((c) => [c.k, c])) as Record<Cmd, (typeof CMDS)[number]>;
 const PAWN = { rimba: "--green", samudra: "--pink" } as const;
 const CONFETTI = ["--orange", "--purple", "--green", "--yellow", "--pink"];
 
@@ -22,15 +22,32 @@ const TOAST = {
 
 // ---------- canvas drawing ----------
 
-const PX = 960; // fixed backing size; CSS scales it to the card
-const CELL = PX / SIZE;
-type FPose = { x: number; y: number; a: number }; // a = degrees, 0 = facing up
-type Particle = { x: number; y: number; vx: number; vy: number; c: string; r: number };
+export const PX = 960; // fixed backing size; CSS scales it to the card
+export const CELL = PX / SIZE;
+export type FPose = { x: number; y: number; a: number }; // a = degrees, 0 = facing up
+export type Particle = { x: number; y: number; vx: number; vy: number; c: string; r: number };
 
 const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
 // Keeps the angle continuous so a turn from left (270°) to up (0°) rotates 90°, not 270°.
-const toF = (p: Pose, prevA = p.dir * 90): FPose => ({ x: p.x, y: p.y, a: prevA + ((((p.dir * 90 - prevA) % 360) + 540) % 360) - 180 });
+export const toF = (p: Pose, prevA = p.dir * 90): FPose => ({ x: p.x, y: p.y, a: prevA + ((((p.dir * 90 - prevA) % 360) + 540) % 360) - 180 });
+
+export const lerpF = (f: FPose, t: FPose, e: number): FPose => ({ x: f.x + (t.x - f.x) * e, y: f.y + (t.y - f.y) * e, a: f.a + (t.a - f.a) * e });
+
+/** Confetti burst from a cell; call the result with k in 0..1 to get that frame's particles. */
+export function burst(cellX: number, cellY: number) {
+  const cx = (cellX + 0.5) * CELL;
+  const cy = (cellY + 0.5) * CELL;
+  const ps = Array.from({ length: 90 }, (_, i) => {
+    const t = Math.random() * Math.PI * 2;
+    const v = 8 + Math.random() * 14;
+    return { x: cx, y: cy, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 10, c: css(CONFETTI[i % 5]), r: Math.random() * 6 };
+  });
+  return (k: number): Particle[] => {
+    const t = k * 60; // frames at 60fps
+    return ps.map((p) => ({ ...p, x: p.x + p.vx * t, y: p.y + p.vy * t + 0.35 * t * t, r: p.r + t * 0.2 }));
+  };
+}
 
 function star(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: number) {
   ctx.beginPath();
@@ -42,7 +59,7 @@ function star(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: number) 
   ctx.closePath();
 }
 
-function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble = 0, confetti: Particle[] = []) {
+export function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble = 0, confetti: Particle[] = []) {
   const ink = css("--ink");
   const inset = 6;
   const cell = (x: number, y: number, dy = 0) => {
@@ -119,7 +136,7 @@ function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble = 0, c
 
 // ---------- program strip ----------
 
-function TileIcon({ k }: { k: Cmd }) {
+export function TileIcon({ k }: { k: Cmd }) {
   return (
     <svg viewBox="-32 -32 64 64" width="30" height="30" aria-hidden="true">
       <Glyph k={k === "mundur" ? "maju" : k} r={k === "mundur" ? 180 : 0} />
@@ -140,7 +157,8 @@ function LoopIcon() {
 const key = (at: At) => `${at.i}-${at.j ?? ""}`;
 const same = (a: At | null, b: At) => !!a && a.i === b.i && a.j === b.j;
 
-export function CodingBoard() {
+/** `head` is the page title; on desktop it sits beside the board so the board starts right under the header. */
+export function CodingBoard({ head }: { head: ReactNode }) {
   const [mi, setMi] = useState(0);
   const [program, setProgram] = useState<Block[]>([]);
   const [open, setOpen] = useState(false); // the last block is a loop still taking tiles
@@ -263,10 +281,7 @@ export function CodingBoard() {
       const to = toF(s.pose, from.a);
       const f = from;
       // Reduced motion: the pawn snaps to each cell instead of sliding.
-      const ok = await frames(id, ms, (k) => {
-        const e = reduce ? Math.floor(k) : 1 - (1 - k) ** 3;
-        paint({ x: f.x + (to.x - f.x) * e, y: f.y + (to.y - f.y) * e, a: f.a + (to.a - f.a) * e });
-      });
+      const ok = await frames(id, ms, (k) => paint(lerpF(f, to, reduce ? Math.floor(k) : 1 - (1 - k) ** 3)));
       if (!ok) return;
       from = to;
     }
@@ -280,17 +295,8 @@ export function CodingBoard() {
       setActive(null);
       setToast(r.outcome);
       if (r.outcome === "success" && !reduce) {
-        const cx = (mission.target.x + 0.5) * CELL;
-        const cy = (mission.target.y + 0.5) * CELL;
-        const ps = Array.from({ length: 90 }, (_, i) => {
-          const t = Math.random() * Math.PI * 2;
-          const v = 8 + Math.random() * 14;
-          return { x: cx, y: cy, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 10, c: css(CONFETTI[i % 5]), r: Math.random() * 6 };
-        });
-        const ok = await frames(id, 1400, (k) => {
-          const t = k * 60; // frames at 60fps
-          paint(end, 0, ps.map((p) => ({ ...p, x: p.x + p.vx * t, y: p.y + p.vy * t + 0.35 * t * t, r: p.r + t * 0.2 })));
-        });
+        const at = burst(mission.target.x, mission.target.y);
+        const ok = await frames(id, 1400, (k) => paint(end, 0, at(k)));
         if (ok) paint(end);
         else return;
       }
@@ -325,16 +331,8 @@ export function CodingBoard() {
 
   return (
     <div className="cb">
-      <div className="cb-missions" role="group" aria-label="Pilih misi">
-        {MISSIONS.map((m, k) => (
-          <button key={k} type="button" className="cb-mission mono" aria-pressed={k === mi} aria-label={`Misi ${k + 1}: ${m.title}`} onClick={() => pickMission(k)}>
-            {k + 1}
-          </button>
-        ))}
-      </div>
-
-      <div className="cb-main">
-        <div className="card cb-board">
+      <div className="cb-head">{head}</div>
+        <div className="board-frame cb-board">
           <canvas
             ref={canvas}
             width={PX}
@@ -348,6 +346,13 @@ export function CodingBoard() {
         </div>
 
         <div className="cb-side">
+          <div className="cb-missions" role="group" aria-label="Pilih misi">
+            {MISSIONS.map((m, k) => (
+              <button key={k} type="button" className="cb-mission" aria-pressed={k === mi} aria-label={`Misi ${k + 1}: ${m.title}`} onClick={() => pickMission(k)}>
+                {k + 1}
+              </button>
+            ))}
+          </div>
           <div className="cb-brief">
             <span className="chip" style={{ background: `var(${PAWN[mission.edition]})` }}>
               Seri {mission.edition}
@@ -364,14 +369,14 @@ export function CodingBoard() {
                 <span className="cb-tile" style={{ background: `var(${c.color})` }}>
                   <TileIcon k={c.k} />
                 </span>
-                <span className="mono">{c.label}</span>
+                <span>{c.label}</span>
               </button>
             ))}
             <button type="button" className="cb-cmd" disabled={full && !open} aria-pressed={open} onClick={toggleLoop}>
               <span className="cb-tile" style={{ background: "var(--green)" }}>
                 <LoopIcon />
               </span>
-              <span className="mono">{open ? "Tutup Ulangi" : "Ulangi"}</span>
+              <span>{open ? "Tutup Ulangi" : "Ulangi"}</span>
             </button>
           </div>
 
@@ -385,7 +390,7 @@ export function CodingBoard() {
                   <button
                     type="button"
                     data-tile={key({ i })}
-                    className={"cb-loop-head mono" + (same(active, { i }) ? " is-active" : "")}
+                    className={"cb-loop-head" + (same(active, { i }) ? " is-active" : "")}
                     aria-label="Hapus Ulangi"
                     onClick={() => remove({ i })}
                     onKeyDown={onTileKey({ i })}
@@ -394,7 +399,7 @@ export function CodingBoard() {
                   </button>
                   <button
                     type="button"
-                    className="cb-loop-times mono"
+                    className="cb-loop-times"
                     aria-label={`Ulangi ${b.times} kali, ketuk untuk mengubah`}
                     onClick={() => edit(withLoop(i, (l) => ({ ...l, times: LOOP_TIMES[(LOOP_TIMES.indexOf(l.times) + 1) % LOOP_TIMES.length] })), open)}
                   >
@@ -417,12 +422,11 @@ export function CodingBoard() {
             <button type="button" className="btn btn-secondary" onClick={() => edit([])}>
               Reset
             </button>
-            <button type="button" className="icon-btn mono cb-speed" aria-pressed={fast} aria-label={fast ? "Kecepatan: cepat" : "Kecepatan: normal"} onClick={() => setFast(!fast)}>
+            <button type="button" className="icon-btn cb-speed" aria-pressed={fast} aria-label={fast ? "Kecepatan: cepat" : "Kecepatan: normal"} onClick={() => setFast(!fast)}>
               {fast ? "2×" : "1×"}
             </button>
           </div>
         </div>
-      </div>
     </div>
   );
 }

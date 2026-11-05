@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Lexend, Unbounded } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], axes: ["opsz", "SOFT"] });
-const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
-const jetbrains = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"] });
+// Unbounded: wide, chunky display that echoes the printed tiles. Lexend: body, built for reading fluency.
+const unbounded = Unbounded({ variable: "--font-unbounded", subsets: ["latin"] });
+const lexend = Lexend({ variable: "--font-lexend", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "BUMILOGI — Belajar Koding, Tanpa Layar",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${fraunces.variable} ${jakarta.variable} ${jetbrains.variable}`}>
+    <html lang="id" className={`${unbounded.variable} ${lexend.variable}`}>
       <body>
         <SiteHeader />
         <main>{children}</main>

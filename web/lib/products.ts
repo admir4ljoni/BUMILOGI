@@ -18,24 +18,6 @@ export type Product = {
 
 export const PRODUCTS: Product[] = [
   {
-    slug: "set-samudra",
-    edition: "samudra",
-    name: "Set Samudra",
-    tagline: "Terumbu karang",
-    description:
-      "Arahkan ikan badut menjelajahi terumbu karang tanpa menabrak karang. Setiap misi melatih anak memecah masalah menjadi langkah-langkah kecil yang runtut.",
-    contents: [
-      "Papan koding 6×6",
-      "24 keping perintah (maju, belok, ulangi)",
-      "3 tokoh satwa Samudra",
-      "12 kartu misi bertingkat",
-      "Panduan bermain untuk guru & orang tua",
-    ],
-    animals: ["Ikan badut", "Terumbu karang"],
-    price_idr: 250000,
-    shopee_url: SHOPEE_URL,
-  },
-  {
     slug: "set-rimba",
     edition: "rimba",
     name: "Set Rimba",
@@ -50,6 +32,24 @@ export const PRODUCTS: Product[] = [
       "Panduan bermain untuk guru & orang tua",
     ],
     animals: ["Badak Jawa", "Orangutan", "Pohon hutan hujan"],
+    price_idr: 250000,
+    shopee_url: SHOPEE_URL,
+  },
+  {
+    slug: "set-samudra",
+    edition: "samudra",
+    name: "Set Samudra",
+    tagline: "Terumbu karang",
+    description:
+      "Arahkan ikan badut menjelajahi terumbu karang tanpa menabrak karang. Setiap misi melatih anak memecah masalah menjadi langkah-langkah kecil yang runtut.",
+    contents: [
+      "Papan koding 6×6",
+      "24 keping perintah (maju, belok, ulangi)",
+      "3 tokoh satwa Samudra",
+      "12 kartu misi bertingkat",
+      "Panduan bermain untuk guru & orang tua",
+    ],
+    animals: ["Ikan badut", "Terumbu karang"],
     price_idr: 250000,
     shopee_url: SHOPEE_URL,
   },

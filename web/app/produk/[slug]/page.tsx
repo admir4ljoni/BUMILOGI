@@ -19,20 +19,11 @@ const PERKS = [
   { title: "Tanpa layar", text: "Belajar logika lewat tangan" },
 ];
 
-function Check() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style={{ flex: "none" }}>
-      <circle cx="12" cy="12" r="11" fill="var(--yellow)" />
-      <path d="M7 12.5l3.2 3L17 9" fill="none" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default async function ProductPage({ params }: PageProps<"/produk/[slug]">) {
   const p = product((await params).slug);
   if (!p) notFound();
   const color = EDITION_COLOR[p.edition];
-  const other = PRODUCTS.find((x) => x.slug !== p.slug);
+  const other = PRODUCTS.find((x) => x.slug !== p.slug)!;
 
   return (
     <div className="container product">
@@ -45,39 +36,28 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
       </nav>
 
       <div className="product-top">
-        <div className="product-gallery">
-          <div className="image-well product-well">
-            <div className="image-blob" style={{ background: `var(${color})` }} />
-            <div className="product-tile" aria-hidden="true">
-              <svg viewBox="-32 -32 64 64" width="100%" height="100%">
-                <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${color})`} stroke="var(--ink)" strokeWidth={3} />
-                <Glyph k="maju" />
-              </svg>
-            </div>
-            <span className="field-hint">Foto produk segera hadir</span>
-          </div>
+        <div className="product-visual" style={{ background: `var(${color})` }}>
+          <svg viewBox="-32 -32 64 64" width="40%" aria-hidden="true">
+            <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
+            <Glyph k="maju" />
+          </svg>
+          <span>Foto produk segera hadir</span>
         </div>
 
         <div className="product-info">
-          <span className="chip" style={{ background: `var(${color})` }}>
-            {p.edition}
-          </span>
-          <h1 className="product-title">{p.name}</h1>
-          <p className="muted">{p.tagline}</p>
-          <p className="product-price mono">{formatIDR(p.price_idr)}</p>
-          <div className="order-card">
-            <a href={p.shopee_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-block">
-              Beli di Shopee
-            </a>
-            <p className="field-hint" style={{ margin: 0 }}>
-              Pembelian, pembayaran, dan pengiriman lewat Shopee.
-            </p>
-          </div>
+          <p className="product-habitat">{p.tagline}</p>
+          <h1>{p.name}</h1>
+          <p className="lead">{p.description}</p>
+          <p className="product-price">{formatIDR(p.price_idr)}</p>
+          <a href={p.shopee_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+            Beli di Shopee
+          </a>
+          <p className="hint">Pembelian, pembayaran, dan pengiriman lewat Shopee.</p>
           <ul className="perks">
             {PERKS.map((k) => (
               <li key={k.title}>
                 <strong>{k.title}</strong>
-                <span className="muted">{k.text}</span>
+                <span>{k.text}</span>
               </li>
             ))}
           </ul>
@@ -86,44 +66,31 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
 
       <div className="product-details">
         <section>
-          <h2 className="card-title">Tentang set ini</h2>
-          <p className="lead">{p.description}</p>
-          <div className="animal-chips">
-            {p.animals.map((a) => (
-              <span key={a} className="animal-chip">
-                <span className="nav-menu-dot" style={{ background: `var(${color})` }} />
-                {a}
-              </span>
-            ))}
-          </div>
-        </section>
-        <section>
-          <h2 className="card-title">Isi set</h2>
+          <h2>Isi set</h2>
           <ul className="checks">
             {p.contents.map((c) => (
-              <li key={c}>
-                <Check />
-                {c}
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        </section>
+        <section>
+          <h2>Tokoh dan habitat</h2>
+          <ul className="animal-list">
+            {p.animals.map((a) => (
+              <li key={a}>
+                <span className="dot" style={{ background: `var(${color})` }} />
+                {a}
               </li>
             ))}
           </ul>
         </section>
       </div>
 
-      {other && (
-        <Link href={`/produk/${other.slug}`} className="card other-series">
-          <span className="chip" style={{ background: `var(${EDITION_COLOR[other.edition]})` }}>
-            {other.edition}
-          </span>
-          <span>
-            <span className="muted" style={{ display: "block", fontSize: 14 }}>
-              Lihat juga
-            </span>
-            <strong className="card-title">{other.name}</strong>
-          </span>
-          <span className="mono other-price">{formatIDR(other.price_idr)} →</span>
-        </Link>
-      )}
+      <Link href={`/produk/${other.slug}`} className="other-series" style={{ borderColor: `var(${EDITION_COLOR[other.edition]})` }}>
+        <span>Lihat juga</span>
+        <strong>{other.name}</strong>
+        <span>{other.tagline}</span>
+      </Link>
     </div>
   );
 }
