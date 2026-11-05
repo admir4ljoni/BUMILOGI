@@ -9,16 +9,14 @@ export const metadata: Metadata = {
 export default function BoardPage() {
   return (
     <div className="container board-page">
-      <div className="section-head">
-        <p className="label eyebrow" style={{ color: "var(--purple-deep)" }}>
-          Papan Koding Virtual
-        </p>
-        <h1>Susun langkah, bawa satwa ke bintang.</h1>
-        <p className="lead">
-          Versi layar dari papan klik-klak. Pilih perintah untuk menyusun program, tekan Jalankan, lalu lihat apakah satwanya sampai tanpa menabrak rintangan.
-        </p>
-      </div>
-      <CodingBoard />
+      <CodingBoard
+        head={
+          <>
+            <h1>Susun langkah, bawa satwa ke bintang.</h1>
+            <p className="lead">Versi layar dari papan klik-klak. Pilih perintah, tekan Jalankan Program, lalu lihat apakah satwanya sampai.</p>
+          </>
+        }
+      />
     </div>
   );
 }

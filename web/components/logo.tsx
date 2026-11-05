@@ -4,7 +4,7 @@ import { Glyph } from "./glyph";
 export function Logo() {
   return (
     <span className="logo">
-      <svg width="32" height="32" viewBox="-32 -32 64 64" aria-hidden="true">
+      <svg width="34" height="34" viewBox="-32 -32 64 64" aria-hidden="true">
         <rect x={-28} y={-28} width={56} height={56} rx={15} fill="var(--orange)" stroke="var(--ink)" strokeWidth={4} />
         <Glyph k="maju" />
       </svg>
@@ -14,9 +14,9 @@ export function Logo() {
 }
 
 export const SECTIONS = [
-  { href: "/#daur-ulang", label: "Daur Ulang", color: "--green" },
-  { href: "/#seri", label: "Seri", color: "--pink" },
-  { href: "/papan-koding", label: "Papan Koding", color: "--purple" },
-  { href: "/#pelatihan", label: "Pelatihan", color: "--yellow" },
-  { href: "/#testimoni", label: "Testimoni", color: "--orange" },
+  { href: "/#cara-bermain", label: "Cara bermain" },
+  { href: "/#seri", label: "Seri" },
+  { href: "/papan-koding", label: "Papan koding" },
+  { href: "/#daur-ulang", label: "Daur ulang" },
+  { href: "/#pelatihan", label: "Pelatihan" },
 ];

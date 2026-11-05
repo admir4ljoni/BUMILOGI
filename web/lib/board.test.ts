@@ -67,7 +67,9 @@ function shortestWithoutLoops(m: Mission): number {
         if (r.outcome === "collision") continue;
         const end = r.steps.at(-1)!.pose;
         const k = `${end.x},${end.y},${end.dir}`;
-        if (!seen.has(k)) seen.add(k), next.push(p);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        next.push(p);
       }
     frontier = next;
   }
