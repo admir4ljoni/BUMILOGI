@@ -172,7 +172,7 @@ export default function Home() {
           </p>
           <div className="actions">
             <a className="btn btn-primary" href={SHOPEE_URL} target="_blank" rel="noopener noreferrer">
-              Beli di Shopee
+              Beli Sekarang
             </a>
             <Link className="btn btn-secondary" href="/papan-koding">
               Coba papan koding

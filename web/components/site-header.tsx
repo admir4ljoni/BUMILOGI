@@ -21,7 +21,7 @@ export function SiteHeader() {
         </ul>
 
         <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
-          Beli di Shopee
+          Beli Sekarang
         </a>
         <button type="button" className="icon-btn nav-menu-btn" popoverTarget="nav-menu" aria-label="Buka menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">

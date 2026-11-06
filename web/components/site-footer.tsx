@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div className="footer-cta">
           <h2>Siap bermain sambil belajar?</h2>
           <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            Beli di Shopee
+            Beli Sekarang
           </a>
         </div>
 

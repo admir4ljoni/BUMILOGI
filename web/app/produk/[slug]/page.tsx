@@ -51,7 +51,7 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
           <p className="lead">{p.description}</p>
           <p className="product-price">{formatIDR(p.price_idr)}</p>
           <a href={p.shopee_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
-            Beli di Shopee
+            Beli Sekarang
           </a>
           <p className="hint">Pembelian, pembayaran, dan pengiriman lewat Shopee.</p>
           <ul className="perks">
