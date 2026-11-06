@@ -40,7 +40,7 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
         <div className="product-visual" style={{ background: `var(${color})` }}>
           <svg className="product-glyph" viewBox="-32 -32 64 64" width="40%" aria-hidden="true">
             <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
-            <Glyph k="maju" />
+            <Glyph k="kanan" />
           </svg>
           <span>Foto produk segera hadir</span>
         </div>

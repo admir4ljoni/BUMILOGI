@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Fragment, type CSSProperties } from "react";
-import { Glyph, type Cmd } from "@/components/glyph";
+import { Glyph, TILE_COLOR, type Cmd } from "@/components/glyph";
 import { HeroBoard } from "@/components/hero-board";
 import { EDITION_COLOR, PRODUCTS, SHOPEE_URL, formatIDR } from "@/lib/products";
 
@@ -8,7 +8,7 @@ import { EDITION_COLOR, PRODUCTS, SHOPEE_URL, formatIDR } from "@/lib/products";
 const HOW = [
   {
     title: "Susun keping perintah",
-    text: "Anak memilih keping Maju, Belok, atau Ulangi dan menjajarkannya menjadi program.",
+    text: "Anak memilih keping arah (atas, bawah, kiri, kanan) atau Ulangi, lalu menjajarkannya menjadi program.",
   },
   {
     title: "Jalankan tokoh satwa",
@@ -40,19 +40,18 @@ const TRAINING_DOCS = [
 ];
 
 const TESTIMONIALS = [
-  { quote: "Anak-anak jadi terbiasa bilang “maju dua, belok kiri” saat bermain. Mereka belajar urutan tanpa sadar sedang belajar.", who: "Guru TK, Surakarta" },
+  { quote: "Anak-anak jadi terbiasa bilang “kanan dua, atas satu” saat bermain. Mereka belajar urutan tanpa sadar sedang belajar.", who: "Guru TK, Surakarta" },
   { quote: "Saya suka karena tidak ada layar. Anak tetap aktif bergerak dan bekerja sama dengan temannya.", who: "Orang tua murid, Sukoharjo" },
   { quote: "Pelatihannya praktis. Besoknya saya langsung bisa memakai kartu misi di kelas.", who: "Guru PAUD, Karanganyar" },
 ];
 
 // The ticker under the hero: plain facts about the toy, separated by small tiles.
 const FACTS = ["Tanpa layar", "Usia 4–6 tahun", "Plastik daur ulang", "Papan 6×6", "Satwa Nusantara", "Pelatihan guru PAUD"];
-const FACT_TILES: Cmd[] = ["maju", "kanan", "kiri"];
+const FACT_TILES: Cmd[] = ["kanan", "atas", "kiri"];
 
 /** Stagger index for [data-reveal] children. */
 const nth = (i: number) => ({ "--i": i }) as CSSProperties;
 
-const TILE_COLOR: Record<Cmd, string> = { maju: "--orange", kiri: "--purple", kanan: "--purple" };
 
 function Tile({ k, size = 48 }: { k: Cmd; size?: number }) {
   return (
@@ -68,7 +67,7 @@ function HowPicture({ step }: { step: number }) {
   if (step === 0)
     return (
       <div className="how-pic">
-        {(["maju", "kanan", "maju"] as const).map((k, i) => (
+        {(["kanan", "atas", "kanan"] as const).map((k, i) => (
           <span key={i} className="how-tile" style={nth(i)}>
             <Tile k={k} size={60} />
           </span>

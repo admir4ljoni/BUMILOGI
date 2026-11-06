@@ -2,14 +2,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, type CSSProperties } from "react";
-import { Glyph, type Cmd } from "./glyph";
+import { Glyph, TILE_COLOR, type Cmd } from "./glyph";
 
-const LOADER_TILES: [Cmd, string][] = [
-  ["maju", "--orange"],
-  ["maju", "--orange"],
-  ["kanan", "--purple"],
-  ["maju", "--orange"],
-];
+const LOADER_TILES: Cmd[] = ["kanan", "bawah", "kanan", "atas"];
 
 // Full-screen loader on the first page load: tiles click into a row until the page has
 // loaded (and at least ~1.4s have passed), then it slides up. `data-loaded` on <html>
@@ -72,9 +67,9 @@ export function Preloader() {
   return (
     <div className="preloader" aria-hidden="true">
       <div className="preloader-tiles">
-        {LOADER_TILES.map(([k, color], i) => (
+        {LOADER_TILES.map((k, i) => (
           <svg key={i} viewBox="-32 -32 64 64" style={{ "--i": i } as CSSProperties}>
-            <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${color})`} stroke="var(--ink)" strokeWidth={3.5} />
+            <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${TILE_COLOR[k]})`} stroke="var(--ink)" strokeWidth={3.5} />
             <Glyph k={k} />
           </svg>
         ))}

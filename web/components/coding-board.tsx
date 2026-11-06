@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { LOOP_TIMES, MAX_TILES, MISSIONS, SIZE, run, tileCount, type At, type Block, type Cmd, type Loop, type Mission, type Pose } from "@/lib/board";
 import { EDITION_COLOR } from "@/lib/products";
-import { Glyph } from "./glyph";
+import { Glyph, TILE_COLOR } from "./glyph";
 
-const CMDS: { k: Cmd; label: string; color: string }[] = [
-  { k: "maju", label: "Maju", color: "--orange" },
-  { k: "mundur", label: "Mundur", color: "--orange" },
-  { k: "kiri", label: "Belok Kiri", color: "--purple" },
-  { k: "kanan", label: "Belok Kanan", color: "--purple" },
-];
+const CMDS: { k: Cmd; label: string; color: string }[] = (
+  [
+    ["atas", "Atas"],
+    ["bawah", "Bawah"],
+    ["kiri", "Kiri"],
+    ["kanan", "Kanan"],
+  ] as const
+).map(([k, label]) => ({ k, label, color: TILE_COLOR[k] }));
 export const CMD = Object.fromEntries(CMDS.map((c) => [c.k, c])) as Record<Cmd, (typeof CMDS)[number]>;
 const CONFETTI = ["--orange", "--purple", "--green", "--yellow", "--pink", "--blue"];
 
@@ -29,7 +31,7 @@ export type Particle = { x: number; y: number; vx: number; vy: number; c: string
 
 const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
-// Keeps the angle continuous so a turn from left (270°) to up (0°) rotates 90°, not 270°.
+// Keeps the angle continuous so the pawn turning from left (270°) to up (0°) rotates 90°, not 270°.
 export const toF = (p: Pose, prevA = p.dir * 90): FPose => ({ x: p.x, y: p.y, a: prevA + ((((p.dir * 90 - prevA) % 360) + 540) % 360) - 180 });
 
 export const lerpF = (f: FPose, t: FPose, e: number): FPose => ({ x: f.x + (t.x - f.x) * e, y: f.y + (t.y - f.y) * e, a: f.a + (t.a - f.a) * e });
@@ -138,15 +140,16 @@ export function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble
 
 export function TileIcon({ k }: { k: Cmd }) {
   return (
-    <svg viewBox="-32 -32 64 64" width="30" height="30" aria-hidden="true">
-      <Glyph k={k === "mundur" ? "maju" : k} r={k === "mundur" ? 180 : 0} />
+    // Tighter box than the decorative tiles: the arrow is the whole message, so it fills the tile.
+    <svg viewBox="-19 -19 38 38" width="30" height="30" aria-hidden="true">
+      <Glyph k={k} />
     </svg>
   );
 }
 
 function LoopIcon() {
   return (
-    <svg viewBox="-32 -32 64 64" width="30" height="30" aria-hidden="true">
+    <svg viewBox="-22 -22 44 44" width="30" height="30" aria-hidden="true">
       <g fill="none" stroke="var(--ink)" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 -6A15 15 0 1 0 12 10M14 -18V-5H1" />
       </g>
