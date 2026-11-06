@@ -3,12 +3,12 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { MISSIONS, run, type Cmd } from "@/lib/board";
 import { CMD, PX, TileIcon, burst, draw, lerpF, toF } from "./coding-board";
-import { Glyph } from "./glyph";
+import { Glyph, TILE_COLOR } from "./glyph";
 
 // The hero's demo: tiles click into the program one by one, then the animal walks
 // the route to the star. Runs the real engine on mission 3, on a loop.
 const DEMO = MISSIONS[2];
-const PROGRAM: Cmd[] = ["maju", "maju", "maju", "kanan", "maju", "maju", "maju"];
+const PROGRAM: Cmd[] = ["atas", "atas", "atas", "kanan", "kanan", "kanan"];
 
 export function HeroBoard() {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -96,7 +96,7 @@ export function HeroBoard() {
     <figure className="hero-board">
       <Pieces />
       <div className="board-frame">
-        <canvas ref={canvas} width={PX} height={PX} role="img" aria-label="Contoh di papan 6×6: badak berjalan maju tiga langkah, belok kanan, lalu maju tiga langkah sampai di bintang." />
+        <canvas ref={canvas} width={PX} height={PX} role="img" aria-label="Contoh di papan 6×6: badak naik tiga kotak, lalu ke kanan tiga kotak sampai di bintang." />
       </div>
       <ol className="hero-strip" aria-label="Program contoh">
         {PROGRAM.map((c, i) => (
@@ -122,12 +122,12 @@ function Pieces() {
         <path d="M0-26 7.6-10.5 24.7-8 12.4 4 15.3 21 0 13 -15.3 21-12.4 4-24.7-8-7.6-10.5Z" fill="var(--yellow)" stroke="var(--ink)" strokeWidth={3.5} strokeLinejoin="round" />
       </svg>
       <svg className="piece piece-kiri" style={{ "--d": 26 } as CSSProperties} viewBox="-32 -32 64 64">
-        <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--purple)" stroke="var(--ink)" strokeWidth={3.5} />
+        <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${TILE_COLOR.kiri})`} stroke="var(--ink)" strokeWidth={3.5} />
         <Glyph k="kiri" />
       </svg>
-      <svg className="piece piece-maju" style={{ "--d": -30 } as CSSProperties} viewBox="-32 -32 64 64">
-        <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--orange)" stroke="var(--ink)" strokeWidth={3.5} />
-        <Glyph k="maju" r={-90} />
+      <svg className="piece piece-atas" style={{ "--d": -30 } as CSSProperties} viewBox="-32 -32 64 64">
+        <rect x={-28} y={-28} width={56} height={56} rx={14} fill={`var(${TILE_COLOR.atas})`} stroke="var(--ink)" strokeWidth={3.5} />
+        <Glyph k="atas" />
       </svg>
       <svg className="piece piece-cap" style={{ "--d": 14 } as CSSProperties} viewBox="-32 -32 64 64">
         <circle r={24} fill="var(--pink)" stroke="var(--ink)" strokeWidth={3.5} />

@@ -1,7 +1,9 @@
 // Virtual board engine: pure, no DOM. The canvas only animates the steps it returns.
 // Rules are frozen (PLAN.md risk 9): one loop level, fixed repeat count.
+// Each arrow tile moves the pawn one cell in its own direction; there is no turning.
+// `dir` only records which way the pawn last moved, so it can face that way on screen.
 
-export type Cmd = "maju" | "mundur" | "kiri" | "kanan";
+export type Cmd = "atas" | "bawah" | "kiri" | "kanan";
 export type Loop = { times: number; body: Cmd[] };
 export type Block = Cmd | Loop;
 export type Dir = 0 | 1 | 2 | 3; // up, right, down, left (y grows downward)
@@ -23,9 +25,10 @@ export type Mission = {
 };
 
 export const SIZE = 6; // the physical board is 6×6
-export const MAX_TILES = 16; // room for a non-optimal route; the hardest mission needs 13 without loops
+export const MAX_TILES = 16; // room for a non-optimal route; the longest mission needs 10 without loops
 export const LOOP_TIMES = [2, 3, 4, 5];
 
+const DIR: Record<Cmd, Dir> = { atas: 0, kanan: 1, bawah: 2, kiri: 3 };
 const DELTA: [number, number][] = [
   [0, -1],
   [1, 0],
@@ -47,17 +50,12 @@ export function run(m: Mission, program: Block[]): Result {
   let pose = m.start;
   const steps: Step[] = [];
   for (const [cmd, at] of flat) {
-    if (cmd === "kiri" || cmd === "kanan") {
-      pose = { ...pose, dir: ((pose.dir + (cmd === "kanan" ? 1 : 3)) % 4) as Dir };
-      steps.push({ pose, at });
-      continue;
-    }
-    const s = cmd === "maju" ? 1 : -1;
-    const x = pose.x + DELTA[pose.dir][0] * s;
-    const y = pose.y + DELTA[pose.dir][1] * s;
+    const dir = DIR[cmd];
+    const x = pose.x + DELTA[dir][0];
+    const y = pose.y + DELTA[dir][1];
     const blocked = x < 0 || y < 0 || x >= SIZE || y >= SIZE || m.obstacles.some(([ox, oy]) => ox === x && oy === y);
     if (blocked) return { outcome: "collision", steps, at };
-    pose = { ...pose, x, y };
+    pose = { x, y, dir };
     steps.push({ pose, at });
     if (x === m.target.x && y === m.target.y) return { outcome: "success", steps };
   }
@@ -67,24 +65,24 @@ export function run(m: Mission, program: Block[]): Result {
 // ponytail: missions are hardcoded; move to a JSON file if non-developers need to edit them.
 export const MISSIONS: Mission[] = [
   {
-    title: "Maju ke bintang",
-    hint: "Tekan Maju sampai badak tiba di bintang.",
+    title: "Ke kanan menuju bintang",
+    hint: "Tekan Kanan sampai badak tiba di bintang.",
     edition: "rimba",
     start: { x: 1, y: 3, dir: 1 },
     target: { x: 4, y: 3 },
     obstacles: [],
   },
   {
-    title: "Mundur pelan-pelan",
-    hint: "Ikan badut menghadap ke kanan, tapi bintangnya di belakang. Coba Mundur!",
+    title: "Naik ke atas",
+    hint: "Bintangnya ada di atas ikan badut. Coba tekan Atas!",
     edition: "samudra",
-    start: { x: 4, y: 2, dir: 1 },
-    target: { x: 1, y: 2 },
+    start: { x: 2, y: 5, dir: 0 },
+    target: { x: 2, y: 1 },
     obstacles: [],
   },
   {
-    title: "Belok di tikungan",
-    hint: "Maju dulu, lalu belok ke kanan.",
+    title: "Lewat tikungan",
+    hint: "Naik dulu, lalu ke kanan.",
     edition: "rimba",
     start: { x: 1, y: 4, dir: 0 },
     target: { x: 4, y: 1 },
@@ -100,7 +98,7 @@ export const MISSIONS: Mission[] = [
   },
   {
     title: "Naik tangga",
-    hint: "Langkahnya berulang: Maju, Belok Kanan, Maju, Belok Kiri. Pakai Ulangi!",
+    hint: "Langkahnya berulang: Atas, lalu Kanan. Pakai Ulangi!",
     edition: "rimba",
     start: { x: 0, y: 5, dir: 0 },
     target: { x: 3, y: 2 },

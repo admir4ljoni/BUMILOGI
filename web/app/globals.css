@@ -1206,7 +1206,7 @@ html[data-loaded]:not([data-nav="cover"]) .hero-strip {
   right: -26px;
   animation-delay: -2s;
 }
-.piece-maju {
+.piece-atas {
   --s: 54px;
   --r: -10deg;
   bottom: 30%;
@@ -1257,7 +1257,7 @@ html[data-loaded]:not([data-nav="cover"]) .piece:nth-child(4) {
     --s: 42px;
     right: -12px;
   }
-  .piece-maju {
+  .piece-atas {
     --s: 40px;
     left: -14px;
   }
