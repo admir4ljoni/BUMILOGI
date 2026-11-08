@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SHOPEE_URL } from "@/lib/products";
+import { STORE_URL } from "@/lib/products";
 import { Logo, SECTIONS } from "./logo";
 
 export function SiteFooter() {
@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className="container">
         <div className="footer-cta">
           <h2>Siap bermain sambil belajar?</h2>
-          <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+          <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
             Beli Sekarang
           </a>
         </div>

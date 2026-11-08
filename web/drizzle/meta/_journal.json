@@ -29,6 +29,13 @@
       "when": 1794150592040,
       "tag": "0003_buy_enabled",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794150966663,
+      "tag": "0004_store_url",
+      "breakpoints": true
     }
   ]
 }

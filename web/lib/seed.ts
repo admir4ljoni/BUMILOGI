@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { MAX_TILES, solve, type Layout } from "./board";
 import { client, db } from "./db";
 import { account, editions, levels, user } from "./db/schema";
-import { SHOPEE_URL } from "./products"; // placeholder; the admin sets real listing URLs (task 20)
+import { STORE_URL } from "./products"; // placeholder; the admin sets real listing URLs (task 20)
 
 const EDITIONS = [
   {
@@ -25,7 +25,7 @@ const EDITIONS = [
     ],
     animals: ["Badak Jawa", "Orangutan", "Pohon hutan hujan"],
     price_idr: 250000,
-    shopee_url: SHOPEE_URL,
+    store_url: STORE_URL,
     buy_enabled: false, // the link is a placeholder until the admin pastes the real listing
     color: "green",
     sort_order: 0,
@@ -45,7 +45,7 @@ const EDITIONS = [
     ],
     animals: ["Ikan badut", "Terumbu karang"],
     price_idr: 250000,
-    shopee_url: SHOPEE_URL,
+    store_url: STORE_URL,
     buy_enabled: false, // the link is a placeholder until the admin pastes the real listing
     color: "blue",
     sort_order: 1,

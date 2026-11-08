@@ -71,7 +71,7 @@ beforeAll(async () => {
 
   const [edition] = await db
     .insert(editions)
-    .values({ slug: `test-${run}`, name: "Test", tagline: "t", description: "d", contents: ["c"], animals: ["a"], price_idr: 1, shopee_url: "https://shopee.co.id", color: "green" })
+    .values({ slug: `test-${run}`, name: "Test", tagline: "t", description: "d", contents: ["c"], animals: ["a"], price_idr: 1, store_url: "https://example.com", color: "green" })
     .returning();
   editionId = edition.id;
   const yesterday = dateInIndonesia(new Date(Date.now() - 86_400_000));
