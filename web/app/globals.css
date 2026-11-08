@@ -690,6 +690,10 @@ button {
   aspect-ratio: 1;
   border-radius: var(--r-lg);
 }
+.product-image {
+  border-radius: inherit;
+  object-fit: cover;
+}
 .product-visual span {
   position: absolute;
   left: var(--s-lg);
@@ -817,7 +821,9 @@ button {
   gap: var(--s-xs);
   font-weight: 600;
 }
-.field input {
+.field input,
+.field textarea,
+.field select {
   padding: 12px 14px;
   border: 2px solid var(--line);
   border-radius: var(--r-md);
@@ -825,8 +831,73 @@ button {
   color: var(--ink);
   background: var(--white);
 }
-.field input:focus-visible {
+.field textarea {
+  resize: vertical;
+}
+.field input:focus-visible,
+.field textarea:focus-visible,
+.field select:focus-visible {
   border-color: var(--ink);
+}
+.field .field-hint {
+  font-weight: 400;
+}
+.field .btn {
+  justify-self: start;
+}
+.admin-bar {
+  border-bottom: 2px solid var(--line);
+}
+.admin-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-lg);
+  min-height: 64px;
+  font-weight: 600;
+}
+.admin-nav > :first-child {
+  margin-right: auto;
+}
+.admin-nav a {
+  text-decoration: none;
+}
+.admin-main {
+  display: grid;
+  gap: var(--s-lg);
+  max-width: 760px;
+  padding-block: var(--s-xl) var(--s-2xl);
+}
+.admin-main h1 {
+  font-size: clamp(28px, 4vw, 40px);
+}
+.admin-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-md);
+}
+.admin-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-sm) var(--s-md);
+  padding-block: var(--s-md);
+  border-bottom: 2px solid var(--line);
+}
+.edition-form {
+  max-width: 560px;
+}
+.edition-image {
+  width: 240px;
+  height: auto;
+  border-radius: var(--r-md);
 }
 .form-error {
   margin: 0;

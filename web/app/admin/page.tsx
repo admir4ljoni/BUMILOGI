@@ -11,20 +11,12 @@ export const instant = false;
 export default async function AdminPage() {
   const user = await getUser();
   if (!user) redirect("/admin/login");
+  if (user.role === "admin") redirect("/admin/edisi");
 
   return (
     <section className="container admin-box">
-      {user.role === "admin" ? (
-        <>
-          <h1>Admin</h1>
-          <p className="muted">Masuk sebagai {user.email}. Edisi dan level bisa diatur di sini segera.</p>
-        </>
-      ) : (
-        <>
-          <h1>Tidak punya akses</h1>
-          <p className="muted">Akun {user.email} bukan akun admin. Guru memakai aplikasi BUMILOGI di ponsel.</p>
-        </>
-      )}
+      <h1>Tidak punya akses</h1>
+      <p className="muted">Akun {user.email} bukan akun admin. Guru memakai aplikasi BUMILOGI di ponsel.</p>
       <form action={signOut}>
         <button type="submit" className="btn btn-sm">
           Keluar

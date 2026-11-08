@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "./db";
 import * as schema from "./db/schema";
 
@@ -31,4 +32,13 @@ export async function requireAdmin() {
   if (!user) return { user: null, error: Response.json({ error: "Silakan masuk dulu" }, { status: 401 }) };
   if (user.role !== "admin") return { user: null, error: Response.json({ error: "Tidak punya akses" }, { status: 403 }) };
   return { user, error: null };
+}
+
+// For admin pages: sends visitors to the login page and teachers to /admin ("Tidak punya akses").
+// Every admin page calls this itself; layouts don't re-run on every navigation.
+export async function requireAdminPage() {
+  const user = await getUser();
+  if (!user) redirect("/admin/login");
+  if (user.role !== "admin") redirect("/admin");
+  return user;
 }
