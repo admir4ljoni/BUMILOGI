@@ -3,7 +3,7 @@ import { CodingBoard } from "@/components/coding-board";
 
 export const metadata: Metadata = {
   title: "Papan Koding — BUMILOGI",
-  description: "Coba papan koding virtual klik-klak: susun keping arah Atas, Bawah, Kiri, Kanan dan Ulangi, lalu bawa satwa ke bintang.",
+  description: "Coba papan koding virtual klik-klak: susun keping arah Atas, Bawah, Kiri, dan Kanan, lalu bawa satwa ke bintang.",
 };
 
 export default function BoardPage() {

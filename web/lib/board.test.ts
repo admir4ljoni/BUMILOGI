@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { MAX_TILES, MISSIONS, run, tileCount, type Block, type Mission } from "./board";
+import { MAX_TILES, MISSIONS, run, solve, type Mission } from "./board";
 
 const open: Mission = { title: "", hint: "", edition: "rimba", start: { x: 0, y: 0, dir: 1 }, target: { x: 5, y: 5 }, obstacles: [[2, 0]] };
 
@@ -17,15 +17,9 @@ test("each arrow moves one cell its own way and faces where it went", () => {
 
 test("collides with obstacles and the board edge, naming the tile", () => {
   const hit = run(open, ["kanan", "kanan", "bawah"]);
-  expect(hit).toEqual({ outcome: "collision", steps: [{ pose: { x: 1, y: 0, dir: 1 }, at: { i: 0 } }], at: { i: 1 } });
+  expect(hit).toEqual({ outcome: "collision", steps: [{ pose: { x: 1, y: 0, dir: 1 }, at: 0 }], at: 1 });
   expect(run(open, ["kiri"]).outcome).toBe("collision");
   expect(run(open, ["atas"]).outcome).toBe("collision");
-});
-
-test("loops expand with body indexes", () => {
-  const r = run(open, ["bawah", { times: 3, body: ["kanan"] }]);
-  expect(r.steps.map((s) => s.at)).toEqual([{ i: 0 }, { i: 1, j: 0 }, { i: 1, j: 0 }, { i: 1, j: 0 }]);
-  expect(r.steps.at(-1)!.pose).toEqual({ x: 3, y: 1, dir: 1 });
 });
 
 test("stops at the target", () => {
@@ -34,51 +28,29 @@ test("stops at the target", () => {
   expect(r.steps).toHaveLength(2);
 });
 
-// One known solution per mission, so a typo in mission data can't ship an unsolvable level.
-const SOLUTIONS: Block[][] = [
-  ["kanan", "kanan", "kanan"],
-  ["atas", "atas", "atas", "atas"],
-  ["atas", "atas", "atas", "kanan", "kanan", "kanan"],
-  ["kanan", "atas", "kanan", "kanan", "kanan", "bawah", "kanan"],
-  [{ times: 3, body: ["atas", "kanan"] }],
-  [{ times: 5, body: ["kanan", "bawah"] }],
-];
-
-test("every mission is solvable within the tile limit", () => {
-  expect(SOLUTIONS).toHaveLength(MISSIONS.length);
-  MISSIONS.forEach((m, k) => {
-    expect(tileCount(SOLUTIONS[k])).toBeLessThanOrEqual(MAX_TILES);
-    expect([k, run(m, SOLUTIONS[k]).outcome]).toEqual([k, "success"]);
-    expect(m.obstacles.some(([x, y]) => (x === m.target.x && y === m.target.y) || (x === m.start.x && y === m.start.y))).toBe(false);
-  });
+test("solve finds a shortest route around obstacles", () => {
+  const path = solve(open)!;
+  expect(path).toHaveLength(10);
+  expect(run(open, path).outcome).toBe("success");
 });
 
-// Fewest tiles needed without Ulangi, by breadth-first search over cells.
-// A child who hasn't discovered loops yet must still be able to finish every mission.
-function shortestWithoutLoops(m: Mission): number {
-  const seen = new Set<string>();
-  let frontier: Block[][] = [[]];
-  for (let len = 1; len <= 30; len++) {
-    const next: Block[][] = [];
-    for (const prog of frontier)
-      for (const c of ["atas", "bawah", "kiri", "kanan"] as const) {
-        const p = [...prog, c];
-        const r = run(m, p);
-        if (r.outcome === "success") return len;
-        if (r.outcome === "collision") continue;
-        const end = r.steps.at(-1)!.pose;
-        const k = `${end.x},${end.y}`;
-        if (seen.has(k)) continue;
-        seen.add(k);
-        next.push(p);
-      }
-    frontier = next;
-  }
-  return Infinity;
-}
+test("solve returns null when the target is walled off", () => {
+  const walled = { ...open, obstacles: [[4, 5], [5, 4]] as [number, number][] };
+  expect(solve(walled)).toBeNull();
+});
 
-test("every mission fits the tile limit even without loops", () => {
-  const need = MISSIONS.map(shortestWithoutLoops);
+test("a longer route still succeeds but isn't the shortest", () => {
+  const detour = run(open, ["bawah", "bawah", "bawah", "bawah", "bawah", "kanan", "kanan", "kanan", "kanan", "atas", "bawah", "kanan"]);
+  expect(detour.outcome).toBe("success");
+  expect(detour.steps.length).toBeGreaterThan(solve(open)!.length);
+});
+
+// Guards the mission data: a typo can't ship an unsolvable or too-long level.
+test("every mission is solvable within the tile limit", () => {
+  const need = MISSIONS.map((m) => solve(m)?.length);
   expect(need).toEqual([3, 4, 6, 7, 6, 10]);
-  need.forEach((n, k) => expect([k, n <= MAX_TILES]).toEqual([k, true]));
+  MISSIONS.forEach((m, k) => {
+    expect([k, need[k]! <= MAX_TILES]).toEqual([k, true]);
+    expect(m.obstacles.some(([x, y]) => (x === m.target.x && y === m.target.y) || (x === m.start.x && y === m.start.y))).toBe(false);
+  });
 });

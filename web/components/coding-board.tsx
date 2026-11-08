@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { LOOP_TIMES, MAX_TILES, MISSIONS, SIZE, run, tileCount, type At, type Block, type Cmd, type Loop, type Mission, type Pose } from "@/lib/board";
+import { MAX_TILES, MISSIONS, SIZE, run, type Cmd, type Mission, type Pose } from "@/lib/board";
 import { EDITION_COLOR } from "@/lib/products";
 import { Glyph, TILE_COLOR } from "./glyph";
 
@@ -147,34 +147,20 @@ export function TileIcon({ k }: { k: Cmd }) {
   );
 }
 
-function LoopIcon() {
-  return (
-    <svg viewBox="-22 -22 44 44" width="30" height="30" aria-hidden="true">
-      <g fill="none" stroke="var(--ink)" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 -6A15 15 0 1 0 12 10M14 -18V-5H1" />
-      </g>
-    </svg>
-  );
-}
-
-const key = (at: At) => `${at.i}-${at.j ?? ""}`;
-const same = (a: At | null, b: At) => !!a && a.i === b.i && a.j === b.j;
-
 /** `head` is the page title; on desktop it sits beside the board so the board starts right under the header. */
 export function CodingBoard({ head }: { head: ReactNode }) {
   const [mi, setMi] = useState(0);
-  const [program, setProgram] = useState<Block[]>([]);
-  const [open, setOpen] = useState(false); // the last block is a loop still taking tiles
-  const [active, setActive] = useState<At | null>(null);
+  const [program, setProgram] = useState<Cmd[]>([]);
+  const [active, setActive] = useState<number | null>(null);
   const [toast, setToast] = useState<keyof typeof TOAST | null>(null);
   const [running, setRunning] = useState(false);
   const [fast, setFast] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const strip = useRef<HTMLDivElement>(null);
   const runId = useRef(0); // bumping it cancels the animation in flight
-  const focusKey = useRef<string | null>(null);
+  const focusIndex = useRef<number | null>(null);
   const mission = MISSIONS[mi];
-  const full = tileCount(program) >= MAX_TILES;
+  const full = program.length >= MAX_TILES;
 
   const paint = (p: FPose, wobble?: number, confetti?: Particle[]) => {
     const ctx = canvas.current?.getContext("2d");
@@ -188,8 +174,8 @@ export function CodingBoard({ head }: { head: ReactNode }) {
 
   // After a keyboard move, keep focus on the tile that moved.
   useEffect(() => {
-    if (focusKey.current) strip.current?.querySelector<HTMLElement>(`[data-tile="${focusKey.current}"]`)?.focus();
-    focusKey.current = null;
+    if (focusIndex.current !== null) strip.current?.querySelector<HTMLElement>(`[data-tile="${focusIndex.current}"]`)?.focus();
+    focusIndex.current = null;
   }, [program]);
 
   function stop() {
@@ -200,57 +186,34 @@ export function CodingBoard({ head }: { head: ReactNode }) {
     paint(toF(mission.start));
   }
 
-  function edit(next: Block[], keepOpen = false) {
+  function edit(next: Cmd[]) {
     stop();
     setProgram(next);
-    if (!keepOpen) setOpen(false);
   }
 
   function add(c: Cmd) {
-    if (full) return;
-    const last = program.at(-1);
-    if (open && last && typeof last !== "string") edit([...program.slice(0, -1), { ...last, body: [...last.body, c] }], true);
-    else edit([...program, c]);
+    if (!full) edit([...program, c]);
   }
 
-  function toggleLoop() {
-    if (open) return setOpen(false);
-    if (full) return;
-    edit([...program, { times: LOOP_TIMES[0], body: [] }]);
-    setOpen(true);
+  function remove(i: number) {
+    edit(program.filter((_, k) => k !== i));
   }
 
-  const withLoop = (i: number, f: (l: Loop) => Loop) => program.map((b, k) => (k === i && typeof b !== "string" ? f(b) : b));
-
-  function remove(at: At) {
-    if (at.j === undefined) return edit(program.filter((_, k) => k !== at.i));
-    edit(withLoop(at.i, (l) => ({ ...l, body: l.body.filter((_, k) => k !== at.j) })), open && at.i === program.length - 1);
+  function move(i: number, d: -1 | 1) {
+    if (i + d < 0 || i + d >= program.length) return;
+    const next = [...program];
+    [next[i], next[i + d]] = [next[i + d], next[i]];
+    focusIndex.current = i + d;
+    edit(next);
   }
 
-  function move(at: At, d: -1 | 1) {
-    const swap = <T,>(xs: T[], i: number) => {
-      const ys = [...xs];
-      [ys[i], ys[i + d]] = [ys[i + d], ys[i]];
-      return ys;
-    };
-    if (at.j === undefined) {
-      if (at.i + d < 0 || at.i + d >= program.length) return;
-      focusKey.current = key({ i: at.i + d });
-      return edit(swap(program, at.i));
-    }
-    const body = (program[at.i] as Loop).body;
-    if (at.j + d < 0 || at.j + d >= body.length) return;
-    focusKey.current = key({ i: at.i, j: at.j + d });
-    edit(withLoop(at.i, (l) => ({ ...l, body: swap(l.body, at.j!) })), open && at.i === program.length - 1);
-  }
-
-  const onTileKey = (at: At) => (e: KeyboardEvent) => {
+  const onTileKey = (i: number) => (e: KeyboardEvent) => {
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
       e.preventDefault();
-      move(at, e.key === "ArrowLeft" ? -1 : 1);
+      move(i, e.key === "ArrowLeft" ? -1 : 1);
     } else if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();
-      remove(at);
+      remove(i);
     }
   };
 
@@ -273,7 +236,6 @@ export function CodingBoard({ head }: { head: ReactNode }) {
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ms = fast ? 220 : 450;
     const r = run(mission, program);
-    setOpen(false);
     setToast(null);
     setRunning(true);
 
@@ -311,26 +273,10 @@ export function CodingBoard({ head }: { head: ReactNode }) {
     runId.current++;
     setMi(k);
     setProgram([]);
-    setOpen(false);
     setActive(null);
     setToast(null);
     setRunning(false);
   }
-
-  const tile = (c: Cmd, at: At) => (
-    <button
-      key={key(at)}
-      type="button"
-      data-tile={key(at)}
-      className={"cb-tile cb-tile-sm" + (same(active, at) ? " is-active" : "")}
-      style={{ background: `var(${CMD[c].color})` }}
-      aria-label={`Hapus ${CMD[c].label}`}
-      onClick={() => remove(at)}
-      onKeyDown={onTileKey(at)}
-    >
-      <TileIcon k={c} />
-    </button>
-  );
 
   return (
     <div className="cb">
@@ -375,44 +321,24 @@ export function CodingBoard({ head }: { head: ReactNode }) {
                 <span>{c.label}</span>
               </button>
             ))}
-            <button type="button" className="cb-cmd" disabled={full && !open} aria-pressed={open} onClick={toggleLoop}>
-              <span className="cb-tile" style={{ background: "var(--green)" }}>
-                <LoopIcon />
-              </span>
-              <span>{open ? "Tutup Ulangi" : "Ulangi"}</span>
-            </button>
           </div>
 
           <div ref={strip} className="cb-strip" role="group" aria-label="Program">
             {program.length === 0 && <span className="muted">Ketuk perintah di atas untuk menyusun program.</span>}
-            {program.map((b, i) =>
-              typeof b === "string" ? (
-                tile(b, { i })
-              ) : (
-                <div key={i} className={"cb-loop" + (open && i === program.length - 1 ? " is-open" : "")}>
-                  <button
-                    type="button"
-                    data-tile={key({ i })}
-                    className={"cb-loop-head" + (same(active, { i }) ? " is-active" : "")}
-                    aria-label="Hapus Ulangi"
-                    onClick={() => remove({ i })}
-                    onKeyDown={onTileKey({ i })}
-                  >
-                    Ulangi
-                  </button>
-                  <button
-                    type="button"
-                    className="cb-loop-times"
-                    aria-label={`Ulangi ${b.times} kali, ketuk untuk mengubah`}
-                    onClick={() => edit(withLoop(i, (l) => ({ ...l, times: LOOP_TIMES[(LOOP_TIMES.indexOf(l.times) + 1) % LOOP_TIMES.length] })), open)}
-                  >
-                    ×{b.times}
-                  </button>
-                  {b.body.map((c, j) => tile(c, { i, j }))}
-                  {open && i === program.length - 1 && <span className="cb-loop-slot" aria-hidden="true">+</span>}
-                </div>
-              ),
-            )}
+            {program.map((c, i) => (
+              <button
+                key={i}
+                type="button"
+                data-tile={i}
+                className={"cb-tile cb-tile-sm" + (active === i ? " is-active" : "")}
+                style={{ background: `var(${CMD[c].color})` }}
+                aria-label={`Hapus ${CMD[c].label}`}
+                onClick={() => remove(i)}
+                onKeyDown={onTileKey(i)}
+              >
+                <TileIcon k={c} />
+              </button>
+            ))}
           </div>
           <p className="field-hint" style={{ margin: 0 }}>
             {full ? `Maksimal ${MAX_TILES} keping. ` : ""}Ketuk keping di program untuk menghapus. Keyboard: panah kiri/kanan untuk memindah.

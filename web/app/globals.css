@@ -936,42 +936,6 @@ button {
   border: 2px dashed var(--line);
   border-radius: var(--r-md);
 }
-.cb-loop {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 3px solid var(--green);
-  border-radius: var(--r-md);
-}
-.cb-loop.is-open {
-  border-style: dashed;
-}
-.cb-loop-head,
-.cb-loop-times {
-  height: 46px;
-  padding: 0 12px;
-  border: var(--edge);
-  border-radius: 12px;
-  background: var(--green);
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.cb-loop-times {
-  background: var(--white);
-}
-.cb-loop-slot {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border: 2px dashed var(--ink-soft);
-  border-radius: 12px;
-  color: var(--ink-muted);
-}
 .cb-controls {
   display: grid;
   grid-template-columns: 1fr auto auto;
