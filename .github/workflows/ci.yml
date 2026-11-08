@@ -5,7 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     services:
-      # The build prerenders public pages from the database, so CI needs one.
+      # The API tests and the build (it prerenders public pages) need a database.
       db:
         image: postgres:16-alpine
         env: { POSTGRES_USER: bumilogi, POSTGRES_PASSWORD: dev, POSTGRES_DB: bumilogi }
@@ -19,5 +19,5 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with: { bun-version-file: web/package.json }
-      - run: bun install --frozen-lockfile && bun test && bun run lint && bun run db:migrate && bun run db:seed && bun run build
+      - run: bun install --frozen-lockfile && bun run db:migrate && bun test && bun run lint && bun run db:seed && bun run build
         working-directory: web
