@@ -3,14 +3,17 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import { Glyph } from "@/components/glyph";
-import { EDITION_COLOR, PRODUCTS, formatIDR, product } from "@/lib/products";
+import { getEditions } from "@/lib/db/site";
+import { formatIDR } from "@/lib/products";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const editions = await getEditions();
+  return editions.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/produk/[slug]">): Promise<Metadata> {
-  const p = product((await params).slug);
+  const { slug } = await params;
+  const p = (await getEditions()).find((x) => x.slug === slug);
   return { title: p ? `${p.name} — BUMILOGI` : "Produk — BUMILOGI", description: p?.description };
 }
 
@@ -21,10 +24,12 @@ const PERKS = [
 ];
 
 export default async function ProductPage({ params }: PageProps<"/produk/[slug]">) {
-  const p = product((await params).slug);
+  const { slug } = await params;
+  const editions = await getEditions();
+  const p = editions.find((x) => x.slug === slug);
   if (!p) notFound();
-  const color = EDITION_COLOR[p.edition];
-  const other = PRODUCTS.find((x) => x.slug !== p.slug)!;
+  const color = `--${p.color}`;
+  const other = editions.find((x) => x.slug !== p.slug);
 
   return (
     <div className="container product">
@@ -87,11 +92,13 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
         </section>
       </div>
 
-      <Link href={`/produk/${other.slug}`} className="other-series" data-reveal style={{ borderColor: `var(${EDITION_COLOR[other.edition]})` }}>
-        <span>Lihat juga</span>
-        <strong>{other.name}</strong>
-        <span>{other.tagline}</span>
-      </Link>
+      {other && (
+        <Link href={`/produk/${other.slug}`} className="other-series" data-reveal style={{ borderColor: `var(--${other.color})` }}>
+          <span>Lihat juga</span>
+          <strong>{other.name}</strong>
+          <span>{other.tagline}</span>
+        </Link>
+      )}
     </div>
   );
 }

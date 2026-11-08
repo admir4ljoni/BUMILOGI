@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
-import { MAX_TILES, MISSIONS, run, solve, type Mission } from "./board";
+import { run, solve, type Layout } from "./board";
 
-const open: Mission = { title: "", hint: "", edition: "rimba", start: { x: 0, y: 0, dir: 1 }, target: { x: 5, y: 5 }, obstacles: [[2, 0]] };
+const open: Layout = { start_x: 0, start_y: 0, target_x: 5, target_y: 5, obstacles: [[2, 0]] };
 
 test("each arrow moves one cell its own way and faces where it went", () => {
   const r = run(open, ["kanan", "bawah", "kanan", "bawah", "kiri"]);
@@ -23,7 +23,7 @@ test("collides with obstacles and the board edge, naming the tile", () => {
 });
 
 test("stops at the target", () => {
-  const r = run({ ...open, target: { x: 0, y: 2 } }, ["bawah", "bawah", "bawah"]);
+  const r = run({ ...open, target_x: 0, target_y: 2 }, ["bawah", "bawah", "bawah"]);
   expect(r.outcome).toBe("success");
   expect(r.steps).toHaveLength(2);
 });
@@ -43,14 +43,4 @@ test("a longer route still succeeds but isn't the shortest", () => {
   const detour = run(open, ["bawah", "bawah", "bawah", "bawah", "bawah", "kanan", "kanan", "kanan", "kanan", "atas", "bawah", "kanan"]);
   expect(detour.outcome).toBe("success");
   expect(detour.steps.length).toBeGreaterThan(solve(open)!.length);
-});
-
-// Guards the mission data: a typo can't ship an unsolvable or too-long level.
-test("every mission is solvable within the tile limit", () => {
-  const need = MISSIONS.map((m) => solve(m)?.length);
-  expect(need).toEqual([3, 4, 6, 7, 6, 10]);
-  MISSIONS.forEach((m, k) => {
-    expect([k, need[k]! <= MAX_TILES]).toEqual([k, true]);
-    expect(m.obstacles.some(([x, y]) => (x === m.target.x && y === m.target.y) || (x === m.start.x && y === m.start.y))).toBe(false);
-  });
 });
