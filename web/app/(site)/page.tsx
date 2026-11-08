@@ -3,7 +3,7 @@ import { Fragment, type CSSProperties } from "react";
 import { Glyph, TILE_COLOR, type Cmd } from "@/components/glyph";
 import { HeroBoard } from "@/components/hero-board";
 import { getEditions } from "@/lib/db/site";
-import { SHOPEE_URL, formatIDR } from "@/lib/products";
+import { STORE_URL, formatIDR } from "@/lib/products";
 
 // Testimonials and training photos are placeholders until real ones are collected.
 const HOW = [
@@ -173,7 +173,7 @@ export default async function Home() {
             satwa di papan sampai ke bintang.
           </p>
           <div className="actions">
-            <a className="btn btn-primary" href={SHOPEE_URL} target="_blank" rel="noopener noreferrer">
+            <a className="btn btn-primary" href={STORE_URL} target="_blank" rel="noopener noreferrer">
               Beli Sekarang
             </a>
             <Link className="btn btn-secondary" href="/papan-koding">

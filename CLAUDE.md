@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 BUMILOGI: a screen-free coding toy for children aged 4–6, built as a campus competition research project (not a business). The goal is to collect data on how children's computational thinking develops. UI copy is Indonesian (`<html lang="id">`).
 
 Parts:
-- **Website** (`web/`, Next.js App Router on Bun): landing page, edition pages with "Beli Sekarang" links to Shopee, and the virtual board (`/papan-koding`). Exists today.
+- **Website** (`web/`, Next.js App Router on Bun): landing page, edition pages with "Beli Sekarang" links to the online store, and the virtual board (`/papan-koding`). Exists today.
 - **Admin dashboard** (`/admin`) and **REST API** (`/api/v1/*`, `/api/auth/*`) in the same Next app, on Vercel Hobby with Neon Postgres. Being built (tasks 18–23).
 - **Teacher app** (`mobile/`, Flutter, Android): classrooms, students, entering children's answers, progress charts, CSV export. Being built (tasks 24–29).
 
@@ -49,7 +49,7 @@ CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `
 - **Auth:** Better Auth in `web/lib/auth.ts` (`getUser()`, `requireAdmin()` for route handlers), mounted at `/api/auth/[...all]`; its tables sit in `schema.ts` with camelCase keys (its adapter needs them) and snake_case columns. `user.role` is `'teacher'` or `'admin'`; anyone can sign up as a teacher. The app sends `Authorization: Bearer <token>` (the `token` from sign-in), the web uses cookies. Reset emails go through `lib/email.ts` (Gmail SMTP; without `SMTP_USER` the link is printed to the server log) to `/reset-password`. Pages that read the session set `instant = false`.
 - **Routes:** public pages live in `app/(site)/` (its layout has the header, footer and motion); `app/not-found.tsx` adds the header and footer itself. The admin is `app/admin/`: `login/` and the "Tidak punya akses" page sit outside `(panel)/`, whose layout has the admin bar and calls `requireAdminPage()`; every panel page calls it too (layouts don't re-run on navigation). Admin forms are client components that call `/api/v1/*`. In production these redirects happen inside a streamed 200, so the login form does a full page load (`location.assign`) instead of `redirect()`. Next keeps a visited page's React state, so reset a create form after saving.
 - **The server grades attempts.** The app sends only the program; the server runs `run()` (via `grade()` in `lib/teacher.ts`) and stores the verdict. Teacher routes look records up with `lib/owned.ts`, which returns null for other teachers' rows (→ 404). Route handlers call `requireUser(request)`/`requireAdmin(request)` with the request, so `api.test.ts` can call them directly with bearer tokens. Chart data and the CSV come from `lib/research.ts`. See PLAN.md "Business rules" for level locking, ownership (404 for others' data) and admin roles.
-- **Buy buttons** are plain `<a target="_blank" rel="noopener noreferrer">` links to Shopee; price, payment and shipping happen there.
+- **Buy buttons** are plain `<a target="_blank" rel="noopener noreferrer">` links to the online store; price, payment and shipping happen there.
 - **Next.js version is newer than training data** (Next 16 / React 19, see `web/AGENTS.md`). Read the relevant guide in `web/node_modules/next/dist/docs/` before writing Next code and heed deprecations. `next dev` re-adds the AGENTS.md block, so commit it rather than removing it.
 - **Motion:** `web/components/motion.tsx` holds the preloader (also the page-transition curtain for internal links), the scroll reveal (`data-reveal`) and scroll scenes (`data-scroll` → `--in/--out/--p`). Everything must stay visible without JS and switch off under `prefers-reduced-motion`.
 - **Styling:** plain CSS with design tokens as CSS variables in `web/app/globals.css` plus inline `style` props. No Tailwind or UI library, in the admin too. White base, brand colors as accents; Unbounded (headings) + Lexend (body) from `next/font/google` in `layout.tsx`. Things you can touch (board, tiles, buttons) get an ink edge and a hard bottom shadow; information stays flat. Use the `-deep` color shades for colored text; never put white text on brand colors. `--blue` was added for Set Samudra. An edition's color is `editions.color`, a token name used as `var(--${color})`. The 2026-11-05 redesign supersedes DESIGN.md's cream base, fonts and all-caps labels.
@@ -67,13 +67,13 @@ CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `
 
 **Remind the user of this whole checklist whenever they talk about deploying, pushing to prod/staging, setting up Vercel or Neon, or starting task 14.** Tick items off here as they're done; delete the section when it's empty.
 
-- [ ] **Shopee:** real store URL (`SHOPEE_URL` placeholder in `web/lib/products.ts`) and listing URLs (`editions.shopee_url`, seeded with the placeholder; editable in the admin after task 20).
+- [ ] **Store links:** real store URL (`STORE_URL` placeholder in `web/lib/products.ts`) and listing URLs (`editions.store_url`, seeded with the placeholder; editable in the admin after task 20).
 - [ ] **Vercel project:** root directory `web`, build command `bun run db:migrate && bun run build`, functions region `sin1`.
 - [ ] **Neon:** added from Vercel Storage, region Singapore, pooled connection string.
 - [ ] **Env vars** set in Vercel: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and the Blob, SMTP and Google ones once those tasks are done.
 - [ ] **First admin** seeded in production.
 - [ ] **Google sign-in** client IDs for the app (once task 29 is done; the web admin has no Google login).
-- [ ] **Verify live:** open the site from a WhatsApp link on a real Android phone; buy buttons open the Shopee app/listing; admin login works.
+- [ ] **Verify live:** open the site from a WhatsApp link on a real Android phone; buy buttons open the store app/listing; admin login works.
 
 ## Conventions
 

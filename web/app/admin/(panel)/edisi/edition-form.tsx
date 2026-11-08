@@ -11,7 +11,7 @@ import { EditionPicture } from "./edition-picture";
 
 type Draft = Omit<Edition, "id" | "image_url" | "created_at" | "updated_at">;
 
-const EMPTY: Draft = { name: "", slug: "", tagline: "", description: "", contents: [], animals: [], price_idr: 0, shopee_url: "", buy_enabled: true, color: "green", sort_order: 0 };
+const EMPTY: Draft = { name: "", slug: "", tagline: "", description: "", contents: [], animals: [], price_idr: 0, store_url: "", buy_enabled: true, color: "green", sort_order: 0 };
 
 const lines = (text: FormDataEntryValue | null) =>
   String(text ?? "")
@@ -40,7 +40,7 @@ function readForm(form: HTMLFormElement): Draft {
     contents: lines(data.get("contents")),
     animals: lines(data.get("animals")),
     price_idr: Number(data.get("price_idr")),
-    shopee_url: String(data.get("shopee_url") ?? ""),
+    store_url: String(data.get("store_url") ?? ""),
     buy_enabled: data.get("buy_enabled") === "on",
     color: String(data.get("color") ?? "green"),
     sort_order: Number(data.get("sort_order")),
@@ -222,8 +222,8 @@ export function EditionForm({ edition }: { edition: Edition | null }) {
             Urutan: angka kecil tampil lebih dulu.
           </span>
           <label className="field">
-            Link Shopee
-            <input name="shopee_url" type="url" defaultValue={initial.shopee_url} placeholder="https://shopee.co.id/..." required />
+            Link toko online
+            <input name="store_url" type="url" defaultValue={initial.store_url} placeholder="https://..." required />
           </label>
           <label className="check">
             <input name="buy_enabled" type="checkbox" defaultChecked={initial.buy_enabled} />

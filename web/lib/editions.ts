@@ -62,8 +62,8 @@ export function parseEdition(body: unknown): Result {
   if (typeof price !== "number" || !Number.isInteger(price) || price <= 0 || price > 100_000_000)
     return { data: null, error: "Harga harus angka bulat lebih dari 0." };
 
-  const shopee = httpsUrl(b.shopee_url);
-  if (!shopee) return { data: null, error: "Link Shopee harus alamat https:// yang lengkap." };
+  const store = httpsUrl(b.store_url);
+  if (!store) return { data: null, error: "Link toko online harus alamat https:// yang lengkap." };
 
   if (typeof b.buy_enabled !== "boolean") return { data: null, error: "Pilih apakah tombol Beli aktif." };
 
@@ -81,7 +81,7 @@ export function parseEdition(body: unknown): Result {
     return { data: null, error: "Urutan harus angka bulat." };
 
   return {
-    data: { slug, name, tagline, description, contents, animals, price_idr: price, shopee_url: shopee.href, buy_enabled: b.buy_enabled, image_url, color: b.color, sort_order: sort },
+    data: { slug, name, tagline, description, contents, animals, price_idr: price, store_url: store.href, buy_enabled: b.buy_enabled, image_url, color: b.color, sort_order: sort },
     error: null,
   };
 }

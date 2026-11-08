@@ -1,0 +1,1 @@
+ALTER TABLE "editions" RENAME COLUMN "shopee_url" TO "store_url";

@@ -73,17 +73,17 @@ async function Product({ params }: Pick<PageProps<"/produk/[slug]">, "params">) 
           <p className="product-price">{formatIDR(p.price_idr)}</p>
           {p.buy_enabled ? (
             <>
-              <a href={p.shopee_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
+              <a href={p.store_url} target="_blank" rel="noopener noreferrer" className="btn btn-primary">
                 Beli Sekarang
               </a>
-              <p className="hint">Pembelian, pembayaran, dan pengiriman lewat Shopee.</p>
+              <p className="hint">Pembelian, pembayaran, dan pengiriman lewat e-commerce yang tersedia.</p>
             </>
           ) : (
             <>
               <button type="button" className="btn btn-primary" disabled>
                 Segera Hadir
               </button>
-              <p className="hint">Edisi ini belum bisa dibeli. Nantikan di Shopee.</p>
+              <p className="hint">Edisi ini belum bisa dibeli. Nantikan kehadirannya ya!</p>
             </>
           )}
           <ul className="perks">

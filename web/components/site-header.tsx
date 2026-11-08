@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SHOPEE_URL } from "@/lib/products";
+import { STORE_URL } from "@/lib/products";
 import { Logo, SECTIONS } from "./logo";
 
 export function SiteHeader() {
@@ -20,7 +20,7 @@ export function SiteHeader() {
           ))}
         </ul>
 
-        <a href={SHOPEE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
+        <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
           Beli Sekarang
         </a>
         <button type="button" className="icon-btn nav-menu-btn" popoverTarget="nav-menu" aria-label="Buka menu">

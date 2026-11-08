@@ -2,7 +2,7 @@
 
 Website for **klik-klak**, a screen-free coding toy for children aged 4–6, 3D-printed from recycled plastic. The UI is in Indonesian.
 
-The site is a landing page and product information source, plus a virtual version of the board. There are no accounts and no checkout: buy buttons link to the BUMILOGI Shopee store.
+The site is a landing page and product information source, plus a virtual version of the board. There are no accounts and no checkout: buy buttons link to the BUMILOGI online store.
 
 - `web/`: Next.js 16 (App Router) on Bun. Public pages are prerendered from a Postgres database (Drizzle ORM).
 

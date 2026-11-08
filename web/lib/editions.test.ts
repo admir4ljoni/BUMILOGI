@@ -9,7 +9,7 @@ const valid = {
   contents: ["Papan koding 6×6"],
   animals: ["Badak Jawa"],
   price_idr: 250000,
-  shopee_url: "https://shopee.co.id/bumilogi",
+  store_url: "https://example.com/bumilogi",
   buy_enabled: true,
   image_url: "https://abc123.public.blob.vercel-storage.com/edisi/rimba-x1.png",
   color: "green",
@@ -33,7 +33,7 @@ test("rejects bad input", () => {
   expect(parseEdition({ ...valid, price_idr: "250000" }).error).not.toBeNull();
   expect(parseEdition({ ...valid, contents: [] }).error).not.toBeNull();
   expect(parseEdition({ ...valid, animals: ["ok", " "] }).error).not.toBeNull();
-  expect(parseEdition({ ...valid, shopee_url: "javascript:alert(1)" }).error).not.toBeNull();
+  expect(parseEdition({ ...valid, store_url: "javascript:alert(1)" }).error).not.toBeNull();
   expect(parseEdition({ ...valid, image_url: "https://evil.example.com/x.png" }).error).not.toBeNull();
   expect(parseEdition({ ...valid, buy_enabled: "false" }).error).not.toBeNull();
   expect(parseEdition({ ...valid, color: "red" }).error).not.toBeNull();
