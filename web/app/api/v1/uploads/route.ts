@@ -4,7 +4,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { requireAdmin } from "@/lib/auth";
 
 export async function POST(request: Request) {
-  const { error } = await requireAdmin();
+  const { error } = await requireAdmin(request);
   if (error) return error;
 
   const body = (await request.json().catch(() => null)) as HandleUploadBody | null;

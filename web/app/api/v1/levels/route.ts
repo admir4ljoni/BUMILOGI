@@ -9,7 +9,7 @@ import { parseLevel } from "@/lib/levels";
 export async function GET(request: Request) {
   const onSite = new URL(request.url).searchParams.get("on_site") === "true";
   if (!onSite) {
-    const { error } = await requireAdmin();
+    const { error } = await requireAdmin(request);
     if (error) return error;
   }
   const query = db.select().from(levels).orderBy(asc(levels.sort_order), asc(levels.id));
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { error } = await requireAdmin();
+  const { error } = await requireAdmin(request);
   if (error) return error;
 
   const parsed = parseLevel(await request.json().catch(() => null));

@@ -20,7 +20,7 @@ async function countAttempts(levelId: number) {
 }
 
 export async function PUT(request: Request, { params }: RouteContext<"/api/v1/levels/[id]">) {
-  const { error } = await requireAdmin();
+  const { error } = await requireAdmin(request);
   if (error) return error;
 
   const old = await findLevel((await params).id);
@@ -41,8 +41,8 @@ export async function PUT(request: Request, { params }: RouteContext<"/api/v1/le
   return Response.json(level);
 }
 
-export async function DELETE(_request: Request, { params }: RouteContext<"/api/v1/levels/[id]">) {
-  const { error } = await requireAdmin();
+export async function DELETE(request: Request, { params }: RouteContext<"/api/v1/levels/[id]">) {
+  const { error } = await requireAdmin(request);
   if (error) return error;
 
   const level = await findLevel((await params).id);

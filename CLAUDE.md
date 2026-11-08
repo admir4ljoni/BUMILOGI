@@ -33,13 +33,13 @@ bun run db:seed          # editions + starter levels, only into an empty databas
 bun run db:seed -- --admin <email>  # also make that user an admin; creates it and prints a password if new
 bun run db:generate      # after editing lib/db/schema.ts: writes a new SQL file to commit
 bun dev                  # :3000
-bun test                 # lib/board.test.ts
+bun test                 # lib/*.test.ts, plus app/api/v1/api.test.ts against the Docker db (.env.test)
 bun run lint
 bun run build            # needs the database (pages prerender from it); catches errors `bun dev` hides
 docker compose up --build  # (repo root) db + site in a container on :3000; migrates, seeds, builds on start
 ```
 
-CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `bun install --frozen-lockfile && bun test && bun run lint && bun run db:migrate && bun run db:seed && bun run build`.
+CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `bun install --frozen-lockfile && bun run db:migrate && bun test && bun run lint && bun run db:seed && bun run build`.
 
 ## Architecture
 
@@ -48,7 +48,7 @@ CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `
 - **Board rules** (same as the physical toy): 6×6 grid, four tiles (atas, bawah, kiri, kanan), at most 18 tiles, no loop tile. `web/lib/board.ts` is pure TypeScript with `run()` and `solve()` (BFS shortest program), tested in `board.test.ts`; both take a level row's columns (`start_x`, `target_y`, `obstacles`, …) directly. The admin editor, the virtual board and the API all use it; `components/coding-board.tsx` only animates its steps on a canvas.
 - **Auth:** Better Auth in `web/lib/auth.ts` (`getUser()`, `requireAdmin()` for route handlers), mounted at `/api/auth/[...all]`; its tables sit in `schema.ts` with camelCase keys (its adapter needs them) and snake_case columns. `user.role` is `'teacher'` or `'admin'`; anyone can sign up as a teacher. The app sends `Authorization: Bearer <token>` (the `token` from sign-in), the web uses cookies. Reset emails go through `lib/email.ts` (Gmail SMTP; without `SMTP_USER` the link is printed to the server log) to `/reset-password`. Pages that read the session set `instant = false`.
 - **Routes:** public pages live in `app/(site)/` (its layout has the header, footer and motion); `app/not-found.tsx` adds the header and footer itself. The admin is `app/admin/`: `login/` and the "Tidak punya akses" page sit outside `(panel)/`, whose layout has the admin bar and calls `requireAdminPage()`; every panel page calls it too (layouts don't re-run on navigation). Admin forms are client components that call `/api/v1/*`. In production these redirects happen inside a streamed 200, so the login form does a full page load (`location.assign`) instead of `redirect()`. Next keeps a visited page's React state, so reset a create form after saving.
-- **The server grades attempts.** The app sends only the program; the server runs `run()` and stores the verdict. See PLAN.md "Business rules" for level locking, ownership (404 for others' data) and admin roles.
+- **The server grades attempts.** The app sends only the program; the server runs `run()` (via `grade()` in `lib/teacher.ts`) and stores the verdict. Teacher routes look records up with `lib/owned.ts`, which returns null for other teachers' rows (→ 404). Route handlers call `requireUser(request)`/`requireAdmin(request)` with the request, so `api.test.ts` can call them directly with bearer tokens. Chart data and the CSV come from `lib/research.ts`. See PLAN.md "Business rules" for level locking, ownership (404 for others' data) and admin roles.
 - **Buy buttons** are plain `<a target="_blank" rel="noopener noreferrer">` links to Shopee; price, payment and shipping happen there.
 - **Next.js version is newer than training data** (Next 16 / React 19, see `web/AGENTS.md`). Read the relevant guide in `web/node_modules/next/dist/docs/` before writing Next code and heed deprecations. `next dev` re-adds the AGENTS.md block, so commit it rather than removing it.
 - **Motion:** `web/components/motion.tsx` holds the preloader (also the page-transition curtain for internal links), the scroll reveal (`data-reveal`) and scroll scenes (`data-scroll` → `--in/--out/--p`). Everything must stay visible without JS and switch off under `prefers-reduced-motion`.

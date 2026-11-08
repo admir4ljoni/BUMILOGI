@@ -26,7 +26,7 @@ async function deleteImage(url: string) {
 }
 
 export async function PUT(request: Request, { params }: RouteContext<"/api/v1/editions/[id]">) {
-  const { error } = await requireAdmin();
+  const { error } = await requireAdmin(request);
   if (error) return error;
 
   const old = await findEdition((await params).id);
@@ -49,8 +49,8 @@ export async function PUT(request: Request, { params }: RouteContext<"/api/v1/ed
   return Response.json(edition);
 }
 
-export async function DELETE(_request: Request, { params }: RouteContext<"/api/v1/editions/[id]">) {
-  const { error } = await requireAdmin();
+export async function DELETE(request: Request, { params }: RouteContext<"/api/v1/editions/[id]">) {
+  const { error } = await requireAdmin(request);
   if (error) return error;
 
   const edition = await findEdition((await params).id);
