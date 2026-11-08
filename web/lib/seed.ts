@@ -1,9 +1,12 @@
 // `bun run db:seed`: fills an empty database with the two editions and the six starter levels
 // that used to be constants in the code. Does nothing if editions already exist, so it is safe
-// to run again (and in production, where it will also seed the first admin from task 19).
+// to run again, also in production.
+// `bun run db:seed -- --admin <email>` also makes that user an admin (creating the account if needed).
+import { generateRandomString, hashPassword } from "better-auth/crypto";
+import { eq } from "drizzle-orm";
 import { MAX_TILES, solve, type Layout } from "./board";
 import { client, db } from "./db";
-import { editions, levels } from "./db/schema";
+import { account, editions, levels, user } from "./db/schema";
 import { SHOPEE_URL } from "./products"; // placeholder; the admin sets real listing URLs (task 20)
 
 const EDITIONS = [
@@ -89,5 +92,34 @@ async function seedContent() {
   console.log(`Seeded ${EDITIONS.length} editions and ${LEVELS.length} levels.`);
 }
 
+async function seedAdmin(email: string) {
+  const [existing] = await db.update(user).set({ role: "admin" }).where(eq(user.email, email)).returning({ id: user.id });
+  if (existing) {
+    console.log(`${email} is now an admin (password unchanged).`);
+    return;
+  }
+
+  // Same rows Better Auth writes on email sign-up: a user plus a 'credential' account holding the hash.
+  const password = generateRandomString(16, "a-z", "A-Z", "0-9");
+  const id = crypto.randomUUID();
+  await db.transaction(async (tx) => {
+    await tx.insert(user).values({ id, name: email.split("@")[0], email, emailVerified: true, role: "admin" });
+    await tx.insert(account).values({ id: crypto.randomUUID(), accountId: id, providerId: "credential", userId: id, password: await hashPassword(password) });
+  });
+  console.log(`Created admin ${email} with password: ${password}`);
+  console.log("Save it now; it is not shown again.");
+}
+
 await seedContent();
+
+const adminFlag = process.argv.indexOf("--admin");
+if (adminFlag !== -1) {
+  const email = process.argv[adminFlag + 1]?.trim().toLowerCase(); // Better Auth stores emails lowercase
+  if (!email || !email.includes("@")) {
+    console.error("Usage: bun run db:seed -- --admin <email>");
+    process.exitCode = 1;
+  } else {
+    await seedAdmin(email);
+  }
+}
 await client.end();

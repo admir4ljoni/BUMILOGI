@@ -30,6 +30,7 @@ docker compose up -d db  # (repo root) Postgres 16 on localhost:5432
 bun install
 bun run db:migrate       # applies drizzle/*.sql (lib/db/migrate.ts)
 bun run db:seed          # editions + starter levels, only into an empty database (lib/seed.ts)
+bun run db:seed -- --admin <email>  # also make that user an admin; creates it and prints a password if new
 bun run db:generate      # after editing lib/db/schema.ts: writes a new SQL file to commit
 bun dev                  # :3000
 bun test                 # lib/board.test.ts
@@ -45,6 +46,7 @@ CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `
 - **One Next app** serves the public site, `/admin`, and the API. Server logic lives only in route handlers under `web/app/api/`. Public pages stay prerendered and are regenerated when an admin saves.
 - **Data** lives in Postgres via Drizzle: tables in `web/lib/db/schema.ts` (TS keys = snake_case column names), SQL migrations in `web/drizzle/`. Public pages read through the `"use cache"` functions in `web/lib/db/site.ts` (tags `editions`, `levels`), so they prerender at build; admin saves must expire those tags.
 - **Board rules** (same as the physical toy): 6×6 grid, four tiles (atas, bawah, kiri, kanan), at most 18 tiles, no loop tile. `web/lib/board.ts` is pure TypeScript with `run()` and `solve()` (BFS shortest program), tested in `board.test.ts`; both take a level row's columns (`start_x`, `target_y`, `obstacles`, …) directly. The admin editor, the virtual board and the API all use it; `components/coding-board.tsx` only animates its steps on a canvas.
+- **Auth:** Better Auth in `web/lib/auth.ts` (`getUser()`, `requireAdmin()` for route handlers), mounted at `/api/auth/[...all]`; its tables sit in `schema.ts` with camelCase keys (its adapter needs them) and snake_case columns. `user.role` is `'teacher'` or `'admin'`. Sign-up is off until task 22. `/admin` reads the session, so it sets `instant = false` instead of prerendering.
 - **The server grades attempts.** The app sends only the program; the server runs `run()` and stores the verdict. See PLAN.md "Business rules" for level locking, ownership (404 for others' data) and admin roles.
 - **Buy buttons** are plain `<a target="_blank" rel="noopener noreferrer">` links to Shopee; price, payment and shipping happen there.
 - **Next.js version is newer than training data** (Next 16 / React 19, see `web/AGENTS.md`). Read the relevant guide in `web/node_modules/next/dist/docs/` before writing Next code and heed deprecations. `next dev` re-adds the AGENTS.md block, so commit it rather than removing it.
