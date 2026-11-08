@@ -72,7 +72,7 @@ CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `
 - [ ] **Neon:** added from Vercel Storage, region Singapore, pooled connection string.
 - [ ] **Env vars** set in Vercel: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and the Blob, SMTP and Google ones once those tasks are done.
 - [ ] **First admin** seeded in production.
-- [ ] **Google OAuth** redirect URI for the production URL (once task 28 is done).
+- [ ] **Google sign-in** client IDs for the app (once task 29 is done; the web admin has no Google login).
 - [ ] **Verify live:** open the site from a WhatsApp link on a real Android phone; buy buttons open the Shopee app/listing; admin login works.
 
 ## Conventions
