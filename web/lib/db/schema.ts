@@ -2,7 +2,7 @@
 // so rows look the same in TypeScript, in SQL and in the API's JSON.
 // After changing this file run `bun run db:generate` and commit the new SQL in drizzle/.
 import { sql } from "drizzle-orm";
-import { boolean, check, date, index, integer, jsonb, pgTable, serial, smallint, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, check, date, index, integer, jsonb, pgTable, serial, smallint, text, timestamp, unique } from "drizzle-orm/pg-core";
 import type { Cmd } from "../board";
 
 const timestamps = {
@@ -59,6 +59,73 @@ export const levels = pgTable(
       "levels_cells_on_board",
       sql`${t.start_x} between 0 and 5 and ${t.start_y} between 0 and 5 and ${t.target_x} between 0 and 5 and ${t.target_y} between 0 and 5`,
     ),
+  ],
+);
+
+// Teacher data (PLAN.md "Database tables"). Deleting a teacher, classroom or student deletes
+// everything under it; levels can't be deleted while attempts point at them.
+export const classrooms = pgTable(
+  "classrooms",
+  {
+    id: serial().primaryKey(),
+    teacher_id: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text().notNull(),
+    created_at: timestamps.created_at,
+  },
+  (t) => [index("classrooms_teacher_id_idx").on(t.teacher_id)],
+);
+
+export const students = pgTable(
+  "students",
+  {
+    id: serial().primaryKey(),
+    classroom_id: integer()
+      .notNull()
+      .references(() => classrooms.id, { onDelete: "cascade" }),
+    name: text().notNull(), // first name only
+    created_at: timestamps.created_at,
+  },
+  (t) => [index("students_classroom_id_idx").on(t.classroom_id)],
+);
+
+export const assignments = pgTable(
+  "assignments",
+  {
+    id: serial().primaryKey(),
+    classroom_id: integer()
+      .notNull()
+      .references(() => classrooms.id, { onDelete: "cascade" }),
+    level_id: integer()
+      .notNull()
+      .references(() => levels.id, { onDelete: "cascade" }), // a level can only be deleted before anyone played it
+    created_at: timestamps.created_at,
+  },
+  (t) => [unique("assignments_classroom_level").on(t.classroom_id, t.level_id)],
+);
+
+export const attempts = pgTable(
+  "attempts",
+  {
+    id: serial().primaryKey(),
+    student_id: integer()
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    level_id: integer()
+      .notNull()
+      .references(() => levels.id),
+    program: jsonb().$type<Cmd[]>().notNull(), // 1–18 tiles
+    tiles_used: smallint().notNull(),
+    optimal_tiles: smallint().notNull(), // copied from the level when the attempt was graded
+    outcome: text().notNull(),
+    is_optimal: boolean().notNull(),
+    created_at: timestamps.created_at,
+  },
+  (t) => [
+    index("attempts_student_id_idx").on(t.student_id),
+    index("attempts_level_id_idx").on(t.level_id),
+    check("attempts_outcome_valid", sql`${t.outcome} in ('success', 'collision', 'incomplete')`),
   ],
 );
 
@@ -135,3 +202,4 @@ export const verification = pgTable(
 
 export type Edition = typeof editions.$inferSelect;
 export type Level = typeof levels.$inferSelect;
+export type Attempt = typeof attempts.$inferSelect;
