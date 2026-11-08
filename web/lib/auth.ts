@@ -34,14 +34,27 @@ export const auth = betterAuth({
   ],
 });
 
-export async function getUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
+async function sessionUser(requestHeaders: Headers) {
+  const session = await auth.api.getSession({ headers: requestHeaders });
   return session?.user ?? null;
 }
 
-// For API route handlers: `const { error } = await requireAdmin(); if (error) return error;`
-export async function requireAdmin() {
-  const user = await getUser();
+// For pages and server actions.
+export async function getUser() {
+  return sessionUser(await headers());
+}
+
+// For API route handlers: `const { user, error } = await requireUser(request); if (error) return error;`
+// They read the request's own headers, so tests can call a handler directly with a bearer token.
+export async function requireUser(request: Request) {
+  const user = await sessionUser(request.headers);
+  if (!user) return { user: null, error: Response.json({ error: "Silakan masuk dulu" }, { status: 401 }) };
+  return { user, error: null };
+}
+
+// Same, but only for admins.
+export async function requireAdmin(request: Request) {
+  const user = await sessionUser(request.headers);
   if (!user) return { user: null, error: Response.json({ error: "Silakan masuk dulu" }, { status: 401 }) };
   if (user.role !== "admin") return { user: null, error: Response.json({ error: "Tidak punya akses" }, { status: 403 }) };
   return { user, error: null };
