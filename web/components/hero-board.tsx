@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { MISSIONS, run, type Cmd } from "@/lib/board";
+import { run, startPose, type Cmd } from "@/lib/board";
 import { CMD, PX, TileIcon, burst, draw, lerpF, toF } from "./coding-board";
 import { Glyph, TILE_COLOR } from "./glyph";
 
 // The hero's demo: tiles click into the program one by one, then the animal walks
-// the route to the star. Runs the real engine on mission 3, on a loop.
-const DEMO = MISSIONS[2];
+// the route to the star. Runs the real engine on a fixed demo layout, on a loop.
+const DEMO = { start_x: 1, start_y: 4, target_x: 4, target_y: 1, obstacles: [[2, 4], [2, 3], [2, 2]] as [number, number][], color: "green" };
 const PROGRAM: Cmd[] = ["atas", "atas", "atas", "kanan", "kanan", "kanan"];
 
 export function HeroBoard() {
@@ -62,7 +62,7 @@ export function HeroBoard() {
     // ponytail: keeps looping while scrolled out of view; pause with an IntersectionObserver if it shows up in battery use.
     (async () => {
       while (alive) {
-        let from = toF(DEMO.start);
+        let from = toF(startPose(DEMO));
         draw(ctx, DEMO, from);
         setActive(null);
         setPlaced(0);
@@ -80,7 +80,7 @@ export function HeroBoard() {
           from = to;
         }
         setActive(null);
-        const at = burst(DEMO.target.x, DEMO.target.y);
+        const at = burst(DEMO.target_x, DEMO.target_y);
         await tween(1400, (k) => draw(ctx, DEMO, from, 0, at(k)));
         draw(ctx, DEMO, from);
         await wait(2200);

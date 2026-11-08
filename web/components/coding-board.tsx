@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { MAX_TILES, MISSIONS, SIZE, run, type Cmd, type Mission, type Pose } from "@/lib/board";
-import { EDITION_COLOR } from "@/lib/products";
+import { MAX_TILES, SIZE, run, startPose, type Cmd, type Layout, type Pose } from "@/lib/board";
+import type { SiteLevel } from "@/lib/db/site";
 import { Glyph, TILE_COLOR } from "./glyph";
 
 const CMDS: { k: Cmd; label: string; color: string }[] = (
@@ -61,7 +61,8 @@ function star(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: number) 
   ctx.closePath();
 }
 
-export function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble = 0, confetti: Particle[] = []) {
+/** `m.color` is the edition's palette token, used for the pawn. */
+export function draw(ctx: CanvasRenderingContext2D, m: Layout & { color: string }, p: FPose, wobble = 0, confetti: Particle[] = []) {
   const ink = css("--ink");
   const inset = 6;
   const cell = (x: number, y: number, dy = 0) => {
@@ -79,10 +80,10 @@ export function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble
       ctx.stroke();
     }
 
-  cell(m.target.x, m.target.y);
+  cell(m.target_x, m.target_y);
   ctx.fillStyle = css("--yellow");
   ctx.fill();
-  star(ctx, (m.target.x + 0.5) * CELL, (m.target.y + 0.5) * CELL, CELL * 0.28);
+  star(ctx, (m.target_x + 0.5) * CELL, (m.target_y + 0.5) * CELL, CELL * 0.28);
   ctx.lineWidth = 6;
   ctx.lineJoin = "round";
   ctx.strokeStyle = ink;
@@ -113,7 +114,7 @@ export function draw(ctx: CanvasRenderingContext2D, m: Mission, p: FPose, wobble
   ctx.fill();
   ctx.beginPath();
   ctx.arc(0, 0, R, 0, Math.PI * 2);
-  ctx.fillStyle = css(EDITION_COLOR[m.edition]);
+  ctx.fillStyle = css(`--${m.color}`);
   ctx.fill();
   ctx.lineWidth = 6;
   ctx.strokeStyle = ink;
@@ -147,8 +148,11 @@ export function TileIcon({ k }: { k: Cmd }) {
   );
 }
 
-/** `head` is the page title; on desktop it sits beside the board so the board starts right under the header. */
-export function CodingBoard({ head }: { head: ReactNode }) {
+/**
+ * `head` is the page title; on desktop it sits beside the board so the board starts right under the header.
+ * `levels` must not be empty.
+ */
+export function CodingBoard({ head, levels }: { head: ReactNode; levels: SiteLevel[] }) {
   const [mi, setMi] = useState(0);
   const [program, setProgram] = useState<Cmd[]>([]);
   const [active, setActive] = useState<number | null>(null);
@@ -159,7 +163,7 @@ export function CodingBoard({ head }: { head: ReactNode }) {
   const strip = useRef<HTMLDivElement>(null);
   const runId = useRef(0); // bumping it cancels the animation in flight
   const focusIndex = useRef<number | null>(null);
-  const mission = MISSIONS[mi];
+  const mission = levels[mi];
   const full = program.length >= MAX_TILES;
 
   const paint = (p: FPose, wobble?: number, confetti?: Particle[]) => {
@@ -169,8 +173,8 @@ export function CodingBoard({ head }: { head: ReactNode }) {
 
   useEffect(() => {
     const ctx = canvas.current?.getContext("2d");
-    if (ctx) draw(ctx, MISSIONS[mi], toF(MISSIONS[mi].start));
-  }, [mi]);
+    if (ctx) draw(ctx, levels[mi], toF(startPose(levels[mi])));
+  }, [levels, mi]);
 
   // After a keyboard move, keep focus on the tile that moved.
   useEffect(() => {
@@ -183,7 +187,7 @@ export function CodingBoard({ head }: { head: ReactNode }) {
     setRunning(false);
     setActive(null);
     setToast(null);
-    paint(toF(mission.start));
+    paint(toF(startPose(mission)));
   }
 
   function edit(next: Cmd[]) {
@@ -239,7 +243,7 @@ export function CodingBoard({ head }: { head: ReactNode }) {
     setToast(null);
     setRunning(true);
 
-    let from = toF(mission.start);
+    let from = toF(startPose(mission));
     paint(from);
     for (const s of r.steps) {
       setActive(s.at);
@@ -260,7 +264,7 @@ export function CodingBoard({ head }: { head: ReactNode }) {
       setActive(null);
       setToast(r.outcome);
       if (r.outcome === "success" && !reduce) {
-        const at = burst(mission.target.x, mission.target.y);
+        const at = burst(mission.target_x, mission.target_y);
         const ok = await frames(id, 1400, (k) => paint(end, 0, at(k)));
         if (ok) paint(end);
         else return;
@@ -287,7 +291,7 @@ export function CodingBoard({ head }: { head: ReactNode }) {
             width={PX}
             height={PX}
             role="img"
-            aria-label={`Papan ${SIZE}×${SIZE}: pion di kolom ${mission.start.x + 1} baris ${mission.start.y + 1}, bintang di kolom ${mission.target.x + 1} baris ${mission.target.y + 1}, ${mission.obstacles.length} rintangan.`}
+            aria-label={`Papan ${SIZE}×${SIZE}: pion di kolom ${mission.start_x + 1} baris ${mission.start_y + 1}, bintang di kolom ${mission.target_x + 1} baris ${mission.target_y + 1}, ${mission.obstacles.length} rintangan.`}
           />
           <p className="cb-toast" role="status" style={{ background: `var(${toast ? TOAST[toast].bg : "--cream"})` }}>
             {toast ? TOAST[toast].text : running ? "Program berjalan…" : "Susun program, lalu tekan Jalankan Program."}
@@ -296,15 +300,15 @@ export function CodingBoard({ head }: { head: ReactNode }) {
 
         <div className="cb-side">
           <div className="cb-missions" role="group" aria-label="Pilih misi">
-            {MISSIONS.map((m, k) => (
-              <button key={k} type="button" className="cb-mission" aria-pressed={k === mi} aria-label={`Misi ${k + 1}: ${m.title}`} onClick={() => pickMission(k)}>
+            {levels.map((m, k) => (
+              <button key={m.id} type="button" className="cb-mission" aria-pressed={k === mi} aria-label={`Misi ${k + 1}: ${m.title}`} onClick={() => pickMission(k)}>
                 {k + 1}
               </button>
             ))}
           </div>
           <div className="cb-brief">
-            <span className="chip" style={{ background: `var(${EDITION_COLOR[mission.edition]})` }}>
-              Seri {mission.edition}
+            <span className="chip" style={{ background: `var(--${mission.color})` }}>
+              {mission.edition_name}
             </span>
             <h2 className="card-title">
               Misi {mi + 1}: {mission.title}

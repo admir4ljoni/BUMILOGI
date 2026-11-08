@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Fragment, type CSSProperties } from "react";
 import { Glyph, TILE_COLOR, type Cmd } from "@/components/glyph";
 import { HeroBoard } from "@/components/hero-board";
-import { EDITION_COLOR, PRODUCTS, SHOPEE_URL, formatIDR } from "@/lib/products";
+import { getEditions } from "@/lib/db/site";
+import { SHOPEE_URL, formatIDR } from "@/lib/products";
 
 // Testimonials and training photos are placeholders until real ones are collected.
 const HOW = [
@@ -126,10 +127,11 @@ function Caps() {
 }
 
 // Living corner of each series panel: leaves sway for the forest, bubbles rise for the sea.
-function PanelDecor({ edition }: { edition: "rimba" | "samudra" }) {
+// Leaves for land editions, bubbles for sea (blue) ones.
+function PanelDecor({ color }: { color: string }) {
   return (
-    <svg className={`panel-decor panel-decor-${edition}`} viewBox="0 0 120 120" aria-hidden="true">
-      {edition === "rimba"
+    <svg className="panel-decor" viewBox="0 0 120 120" aria-hidden="true">
+      {color !== "blue"
         ? [
             [40, 70, -30],
             [70, 50, 10],
@@ -151,7 +153,8 @@ function PanelDecor({ edition }: { edition: "rimba" | "samudra" }) {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const editions = await getEditions();
   return (
     <>
       <section className="container hero" data-scroll>
@@ -224,15 +227,15 @@ export default function Home() {
             <p className="lead">Setiap seri membawa satwa Nusantara yang perlu kita jaga. Isi papan dan kepingnya sama; tokoh dan kartu misinya berbeda.</p>
           </div>
           <div className="series">
-            {PRODUCTS.map((p, i) => (
+            {editions.map((p, i) => (
               <Link
                 key={p.slug}
                 href={`/produk/${p.slug}`}
                 className="series-panel"
                 data-reveal
-                style={{ ...nth(i), background: `var(${EDITION_COLOR[p.edition]})` }}
+                style={{ ...nth(i), background: `var(--${p.color})` }}
               >
-                <PanelDecor edition={p.edition} />
+                <PanelDecor color={p.color} />
                 <span className="series-habitat">{p.tagline}</span>
                 <h3>{p.name}</h3>
                 <p>{p.description}</p>

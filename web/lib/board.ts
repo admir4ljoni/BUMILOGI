@@ -12,12 +12,12 @@ export type Result =
   | { outcome: "success" | "incomplete"; steps: Step[] }
   | { outcome: "collision"; steps: Step[]; at: number };
 
-export type Mission = {
-  title: string;
-  hint: string;
-  edition: "rimba" | "samudra";
-  start: Pose;
-  target: { x: number; y: number };
+/** A level's layout, in the same shape as the `levels` table columns. */
+export type Layout = {
+  start_x: number;
+  start_y: number;
+  target_x: number;
+  target_y: number;
   obstacles: [number, number][];
 };
 
@@ -33,13 +33,18 @@ const DELTA: [number, number][] = [
   [-1, 0],
 ];
 
-function blocked(m: Mission, x: number, y: number) {
+function blocked(m: Layout, x: number, y: number) {
   return x < 0 || y < 0 || x >= SIZE || y >= SIZE || m.obstacles.some(([ox, oy]) => ox === x && oy === y);
 }
 
+/** Where the pawn stands before the first tile: on the start cell, facing up. */
+export function startPose(m: Layout): Pose {
+  return { x: m.start_x, y: m.start_y, dir: 0 };
+}
+
 /** Runs the program; stops at the first collision or as soon as the pawn reaches the target. */
-export function run(m: Mission, program: Cmd[]): Result {
-  let pose = m.start;
+export function run(m: Layout, program: Cmd[]): Result {
+  let pose = startPose(m);
   const steps: Step[] = [];
   for (const [at, cmd] of program.entries()) {
     const dir = DIR[cmd];
@@ -48,7 +53,7 @@ export function run(m: Mission, program: Cmd[]): Result {
     if (blocked(m, x, y)) return { outcome: "collision", steps, at };
     pose = { x, y, dir };
     steps.push({ pose, at });
-    if (x === m.target.x && y === m.target.y) return { outcome: "success", steps };
+    if (x === m.target_x && y === m.target_y) return { outcome: "success", steps };
   }
   return { outcome: "incomplete", steps };
 }
@@ -58,12 +63,12 @@ export function run(m: Mission, program: Cmd[]): Result {
  * Without loops the fewest tiles is the shortest path, so a breadth-first search over
  * the cells finds it: cells are visited in order of distance from the start.
  */
-export function solve(m: Mission): Cmd[] | null {
-  const seen = new Set([`${m.start.x},${m.start.y}`]);
-  const queue = [{ x: m.start.x, y: m.start.y, path: [] as Cmd[] }];
+export function solve(m: Layout): Cmd[] | null {
+  const seen = new Set([`${m.start_x},${m.start_y}`]);
+  const queue = [{ x: m.start_x, y: m.start_y, path: [] as Cmd[] }];
   for (let i = 0; i < queue.length; i++) {
     const { x, y, path } = queue[i];
-    if (x === m.target.x && y === m.target.y) return path;
+    if (x === m.target_x && y === m.target_y) return path;
     for (const cmd of CMDS) {
       const nx = x + DELTA[DIR[cmd]][0];
       const ny = y + DELTA[DIR[cmd]][1];
@@ -74,55 +79,3 @@ export function solve(m: Mission): Cmd[] | null {
   }
   return null;
 }
-
-// ponytail: missions are hardcoded; move to a JSON file if non-developers need to edit them.
-export const MISSIONS: Mission[] = [
-  {
-    title: "Ke kanan menuju bintang",
-    hint: "Tekan Kanan sampai badak tiba di bintang.",
-    edition: "rimba",
-    start: { x: 1, y: 3, dir: 1 },
-    target: { x: 4, y: 3 },
-    obstacles: [],
-  },
-  {
-    title: "Naik ke atas",
-    hint: "Bintangnya ada di atas ikan badut. Coba tekan Atas!",
-    edition: "samudra",
-    start: { x: 2, y: 5, dir: 0 },
-    target: { x: 2, y: 1 },
-    obstacles: [],
-  },
-  {
-    title: "Lewat tikungan",
-    hint: "Naik dulu, lalu ke kanan.",
-    edition: "rimba",
-    start: { x: 1, y: 4, dir: 0 },
-    target: { x: 4, y: 1 },
-    obstacles: [[2, 4], [2, 3], [2, 2]],
-  },
-  {
-    title: "Awas karang!",
-    hint: "Ada karang di jalan. Cari jalan memutar.",
-    edition: "samudra",
-    start: { x: 0, y: 3, dir: 1 },
-    target: { x: 5, y: 3 },
-    obstacles: [[2, 3], [3, 3]],
-  },
-  {
-    title: "Naik tangga",
-    hint: "Seperti naik tangga: Atas, lalu Kanan, begitu terus.",
-    edition: "rimba",
-    start: { x: 0, y: 5, dir: 0 },
-    target: { x: 3, y: 2 },
-    obstacles: [[0, 3], [1, 2], [2, 1]],
-  },
-  {
-    title: "Menyelam ke dasar",
-    hint: "Jalan zig-zag sampai pojok bawah. Hitung langkahnya!",
-    edition: "samudra",
-    start: { x: 0, y: 0, dir: 1 },
-    target: { x: 5, y: 5 },
-    obstacles: [[3, 0], [5, 1], [0, 2], [0, 5], [2, 5], [5, 3]],
-  },
-];
