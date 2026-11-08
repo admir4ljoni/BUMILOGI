@@ -1,6 +1,29 @@
-# `docker compose up --build` runs the site in a container: open http://localhost:3000.
+# Local Postgres for dev: `docker compose up -d db` (localhost:5432, data kept in a volume).
+# `docker compose up --build` also runs the site in a container on http://localhost:3000
+# (it builds on start, so give it a minute).
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bumilogi
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: bumilogi
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: pg_isready -U bumilogi
+      interval: 2s
+      retries: 15
+    restart: unless-stopped
+
   web:
     build: ./web
+    environment:
+      DATABASE_URL: postgres://bumilogi:dev@db:5432/bumilogi
     ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      db: { condition: service_healthy }
     restart: unless-stopped
+
+volumes:
+  db-data:
