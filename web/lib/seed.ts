@@ -26,6 +26,7 @@ const EDITIONS = [
     animals: ["Badak Jawa", "Orangutan", "Pohon hutan hujan"],
     price_idr: 250000,
     shopee_url: SHOPEE_URL,
+    buy_enabled: false, // the link is a placeholder until the admin pastes the real listing
     color: "green",
     sort_order: 0,
   },
@@ -45,6 +46,7 @@ const EDITIONS = [
     animals: ["Ikan badut", "Terumbu karang"],
     price_idr: 250000,
     shopee_url: SHOPEE_URL,
+    buy_enabled: false, // the link is a placeholder until the admin pastes the real listing
     color: "blue",
     sort_order: 1,
   },

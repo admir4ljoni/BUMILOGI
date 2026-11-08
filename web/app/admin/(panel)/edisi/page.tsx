@@ -57,7 +57,10 @@ export default async function EditionsPage({ searchParams }: PageProps<"/admin/e
                 <span className="admin-card-body">
                   <strong className="admin-card-title">{e.name}</strong>
                   <span className="muted">{e.tagline}</span>
-                  <span className="edition-price">{formatIDR(e.price_idr)}</span>
+                  <span className="edition-price">
+                    {formatIDR(e.price_idr)}
+                    {!e.buy_enabled && " · Segera hadir"}
+                  </span>
                 </span>
               </Link>
               <div className="admin-card-foot">
