@@ -13,6 +13,8 @@ jobs:
         options: --health-cmd pg_isready --health-interval 2s --health-timeout 5s --health-retries 15
     env:
       DATABASE_URL: postgres://bumilogi:dev@localhost:5432/bumilogi
+      BETTER_AUTH_SECRET: ci-only-secret-not-for-production
+      BETTER_AUTH_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2

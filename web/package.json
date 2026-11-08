@@ -12,6 +12,7 @@
     "db:seed": "bun lib/seed.ts"
   },
   "dependencies": {
+    "better-auth": "^1.7.18",
     "drizzle-orm": "0.45.4",
     "next": "16.4.5",
     "postgres": "3.4.9",

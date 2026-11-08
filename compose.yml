@@ -20,6 +20,8 @@ services:
     build: ./web
     environment:
       DATABASE_URL: postgres://bumilogi:dev@db:5432/bumilogi
+      BETTER_AUTH_SECRET: local-docker-only-secret-not-for-production
+      BETTER_AUTH_URL: http://localhost:3000
     ports: ["127.0.0.1:3000:3000"]
     depends_on:
       db: { condition: service_healthy }
