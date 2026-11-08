@@ -30,6 +30,9 @@ export function LoginForm() {
       <button type="submit" className="btn btn-primary" disabled={pending || Boolean(state?.goTo)}>
         {pending ? "Memeriksa…" : "Masuk"}
       </button>
+      <a href="/reset-password" className="field-hint">
+        Lupa kata sandi?
+      </a>
     </form>
   );
 }
