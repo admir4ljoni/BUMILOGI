@@ -4,6 +4,7 @@ import Link from "next/link";
 import { requireAdminPage } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { editions, levels } from "@/lib/db/schema";
+import { dateInIndonesia } from "@/lib/teacher";
 import { LevelForm } from "../level-form";
 
 export const metadata: Metadata = { title: "Tambah level — Admin BUMILOGI", robots: { index: false } };
@@ -31,8 +32,13 @@ export default async function NewLevelPage({ searchParams }: PageProps<"/admin/l
 
   return (
     <>
-      <h1>{original ? `Salin ${original.title}` : "Tambah level"}</h1>
-      <LevelForm key={original?.id ?? "new"} level={null} template={template} editions={editionRows} locked={false} />
+      <div>
+        <Link href="/admin/level" className="admin-back">
+          ← Semua level
+        </Link>
+        <h1>{original ? `Salin ${original.title}` : "Tambah level"}</h1>
+      </div>
+      <LevelForm key={original?.id ?? "new"} level={null} template={template} editions={editionRows} locked={false} today={dateInIndonesia(new Date())} />
     </>
   );
 }

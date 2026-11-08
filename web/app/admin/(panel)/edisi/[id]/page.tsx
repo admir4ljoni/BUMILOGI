@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { eq } from "drizzle-orm";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -17,7 +18,17 @@ export default async function EditEditionPage({ params }: PageProps<"/admin/edis
 
   return (
     <>
-      <h1>Ubah {edition.name}</h1>
+      <div className="admin-head">
+        <div>
+          <Link href="/admin/edisi" className="admin-back">
+            ← Semua edisi
+          </Link>
+          <h1>Ubah {edition.name}</h1>
+        </div>
+        <a href={`/produk/${edition.slug}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm">
+          Lihat di situs ↗
+        </a>
+      </div>
       <EditionForm edition={edition} />
     </>
   );

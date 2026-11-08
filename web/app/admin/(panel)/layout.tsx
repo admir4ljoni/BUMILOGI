@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { requireAdminPage } from "@/lib/auth";
 import { signOut } from "../actions";
+import { AdminNavLinks } from "./admin-nav";
 
 export const instant = false;
 
@@ -9,21 +10,26 @@ export const instant = false;
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   // Checked here so visitors who aren't admins never see this bar. Pages still check for themselves,
   // because a layout doesn't re-run when navigating between its pages.
-  await requireAdminPage();
+  const user = await requireAdminPage();
 
   return (
     <>
       <header className="admin-bar">
         <nav className="container admin-nav" aria-label="Admin">
-          <Link href="/admin" aria-label="Admin BUMILOGI">
+          <Link href="/admin" aria-label="Admin BUMILOGI" className="admin-logo">
             <Logo />
+            <span className="admin-badge">Admin</span>
           </Link>
-          <Link href="/admin/edisi">Edisi</Link>
-          <Link href="/admin/level">Level</Link>
-          <a href="/" target="_blank" rel="noopener noreferrer">
-            Lihat situs
+          <div className="admin-tabs">
+            <AdminNavLinks />
+          </div>
+          <a href="/" target="_blank" rel="noopener noreferrer" className="admin-link">
+            Lihat situs ↗
           </a>
-          <form action={signOut}>
+          <form action={signOut} className="admin-user">
+            <span className="muted" title={user.email}>
+              {user.name || user.email}
+            </span>
             <button type="submit" className="btn btn-sm">
               Keluar
             </button>
