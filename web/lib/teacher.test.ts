@@ -14,9 +14,9 @@ test("grading: a longer route is solved but not optimal", () => {
   expect(g).toMatchObject({ outcome: "success", tiles_used: 6, is_optimal: false });
 });
 
-test("grading: extra tiles after the star still count as used", () => {
+test("grading: going past the star is not solved", () => {
   const g = grade(level, ["atas", "atas", "kanan", "kanan", "bawah"]);
-  expect(g).toMatchObject({ outcome: "success", tiles_used: 5, is_optimal: false });
+  expect(g).toMatchObject({ outcome: "incomplete", tiles_used: 5, is_optimal: false });
 });
 
 test("grading: collision and incomplete", () => {

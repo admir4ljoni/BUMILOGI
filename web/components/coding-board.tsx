@@ -20,6 +20,7 @@ const TOAST = {
   collision: { text: "Ups, ada rintangan! Debug & coba lagi.", bg: "--pink" },
   success: { text: "Hore! Misi selesai.", bg: "--green" },
   incomplete: { text: "Belum sampai bintang. Tambah perintahnya, lalu coba lagi.", bg: "--sand" },
+  passed: { text: "Kelewatan! Satwa harus berhenti tepat di bintang.", bg: "--sand" },
 } as const;
 
 // ---------- canvas drawing ----------
@@ -262,7 +263,9 @@ export function CodingBoard({ head, levels }: { head: ReactNode; levels: SiteLev
       if (!reduce && !(await frames(id, 600, (k) => paint(end, Math.sin(k * Math.PI * 6) * 14 * (1 - k))))) return;
     } else {
       setActive(null);
-      setToast(r.outcome);
+      // Ended off the star but stood on it on the way: tell the child they went too far.
+      const passed = r.outcome === "incomplete" && r.steps.some((s) => s.pose.x === mission.target_x && s.pose.y === mission.target_y);
+      setToast(passed ? "passed" : r.outcome);
       if (r.outcome === "success" && !reduce) {
         const at = burst(mission.target_x, mission.target_y);
         const ok = await frames(id, 1400, (k) => paint(end, 0, at(k)));
