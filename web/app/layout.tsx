@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Lexend, Unbounded } from "next/font/google";
-import { Preloader, ScrollReveal, ScrollScenes } from "@/components/motion";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 // Unbounded: wide, chunky display that echoes the printed tiles. Lexend: body, built for reading fluency.
@@ -17,14 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${unbounded.variable} ${lexend.variable}`}>
-      <body>
-        <Preloader />
-        <ScrollReveal />
-        <ScrollScenes />
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
