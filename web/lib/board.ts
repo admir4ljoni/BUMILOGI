@@ -42,7 +42,10 @@ export function startPose(m: Layout): Pose {
   return { x: m.start_x, y: m.start_y, dir: 0 };
 }
 
-/** Runs the program; stops at the first collision or as soon as the pawn reaches the target. */
+/**
+ * Runs every tile; stops early only at a collision. Like the physical toy, the pawn must end
+ * exactly on the target: passing over it and moving on is not a success.
+ */
 export function run(m: Layout, program: Cmd[]): Result {
   let pose = startPose(m);
   const steps: Step[] = [];
@@ -53,9 +56,9 @@ export function run(m: Layout, program: Cmd[]): Result {
     if (blocked(m, x, y)) return { outcome: "collision", steps, at };
     pose = { x, y, dir };
     steps.push({ pose, at });
-    if (x === m.target_x && y === m.target_y) return { outcome: "success", steps };
   }
-  return { outcome: "incomplete", steps };
+  const onTarget = pose.x === m.target_x && pose.y === m.target_y;
+  return { outcome: onTarget ? "success" : "incomplete", steps };
 }
 
 /**

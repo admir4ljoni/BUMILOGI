@@ -1517,10 +1517,12 @@ button {
 .board-page h1 {
   font-size: clamp(30px, 3.4vw, 44px);
 }
-/* Phone: title, board, controls. Desktop: board on the left, title and controls on the right. */
+/* Phone: title, missions, then the play area (board, tiles, program, buttons) fitting one screen.
+   Desktop: title on top, board on the left, missions and tools on the right.
+   Either way you never scroll between the tiles and the board. */
 .cb {
   display: grid;
-  grid-template-areas: "head" "board" "side";
+  grid-template-areas: "head" "pick" "board" "tools";
   gap: var(--s-lg);
   align-items: start;
 }
@@ -1529,8 +1531,16 @@ button {
   display: grid;
   gap: var(--s-md);
 }
-.cb-side {
-  grid-area: side;
+.cb-pick,
+.cb-tools {
+  display: grid;
+  gap: var(--s-md);
+}
+.cb-pick {
+  grid-area: pick;
+}
+.cb-tools {
+  grid-area: tools;
 }
 .cb-missions {
   display: flex;
@@ -1561,10 +1571,6 @@ button {
   border-radius: var(--r-md);
   font-weight: 600;
   text-align: center;
-}
-.cb-side {
-  display: grid;
-  gap: var(--s-md);
 }
 .cb-brief {
   display: grid;
@@ -1660,16 +1666,80 @@ button {
   border: 2px solid var(--ink);
   font-weight: 600;
 }
+.cb-hint {
+  margin: 0;
+}
+@media (max-width: 899px) {
+  .cb {
+    gap: var(--s-md);
+  }
+  /* The play area must fit under the header: the board takes what the tiles, program row
+     and buttons leave. ponytail: 410px ≈ header + tiles + 2-row program + buttons + gaps;
+     re-measure if those change. */
+  .cb-board {
+    justify-self: center;
+    width: clamp(220px, calc(100svh - 410px), 100%);
+    padding: 8px;
+    box-shadow: 0 6px 0 var(--ink);
+  }
+  .cb-toast {
+    margin-top: 8px;
+    padding: 6px var(--s-sm);
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  .cb-tools {
+    gap: 12px;
+  }
+  .cb-palette .cb-tile {
+    width: 48px;
+    height: 48px;
+  }
+  .cb-cmd {
+    gap: 4px;
+    font-size: 12px;
+  }
+  /* 18 tiles fit in two rows, and the row keeps its height as tiles are added. */
+  .cb-strip {
+    gap: 3px;
+    min-height: 84px;
+    padding: 8px;
+    align-content: start;
+  }
+  .cb-strip .cb-tile-sm {
+    width: 31px;
+    height: 31px;
+    border-radius: 9px;
+  }
+  .cb-strip .cb-tile-sm svg {
+    width: 20px;
+    height: 20px;
+  }
+  .cb-hint {
+    display: none; /* keyboard tips; the empty program row already says to tap */
+  }
+  .cb-controls .btn {
+    padding-inline: 14px; /* all three buttons fit on a 360px-wide phone */
+  }
+}
 @media (min-width: 900px) {
   .cb {
     grid-template-columns: 7fr 5fr;
-    grid-template-areas: "board head" "board side";
-    grid-template-rows: auto 1fr;
+    grid-template-areas: "head head" "board pick" "board tools";
+    grid-template-rows: auto auto 1fr;
     column-gap: var(--s-2xl);
   }
+  /* Pinned under the header while the right column scrolls on short laptops. */
   .cb-board {
+    position: sticky;
+    top: 97px; /* 72px header + its border + a gap */
     /* whole board, status line included, visible under the header */
     max-width: max(360px, calc(100svh - 230px)); /* ponytail: 230px ≈ header + page padding + status line */
+  }
+}
+@media (min-width: 900px) and (max-height: 760px) {
+  .cb-hint {
+    display: none; /* short laptop screens: keep the buttons on screen */
   }
 }
 

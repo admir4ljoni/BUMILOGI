@@ -22,10 +22,14 @@ test("collides with obstacles and the board edge, naming the tile", () => {
   expect(run(open, ["atas"]).outcome).toBe("collision");
 });
 
-test("stops at the target", () => {
-  const r = run({ ...open, target_x: 0, target_y: 2 }, ["bawah", "bawah", "bawah"]);
-  expect(r.outcome).toBe("success");
-  expect(r.steps).toHaveLength(2);
+test("succeeds only when the last tile ends on the target", () => {
+  const target = { ...open, target_x: 0, target_y: 2 };
+  expect(run(target, ["bawah", "bawah"]).outcome).toBe("success");
+  const past = run(target, ["bawah", "bawah", "bawah"]);
+  expect(past.outcome).toBe("incomplete"); // went over the star and kept going
+  expect(past.steps).toHaveLength(3);
+  expect(run(target, ["bawah", "bawah", "bawah", "atas"]).outcome).toBe("success"); // came back to it
+  expect(run(target, ["bawah", "bawah", "kiri"]).outcome).toBe("collision");
 });
 
 test("solve finds a shortest route around obstacles", () => {

@@ -20,6 +20,7 @@ const TOAST = {
   collision: { text: "Ups, ada rintangan! Debug & coba lagi.", bg: "--pink" },
   success: { text: "Hore! Misi selesai.", bg: "--green" },
   incomplete: { text: "Belum sampai bintang. Tambah perintahnya, lalu coba lagi.", bg: "--sand" },
+  passed: { text: "Kelewatan! Satwa harus berhenti tepat di bintang.", bg: "--sand" },
 } as const;
 
 // ---------- canvas drawing ----------
@@ -149,8 +150,8 @@ export function TileIcon({ k }: { k: Cmd }) {
 }
 
 /**
- * `head` is the page title; on desktop it sits beside the board so the board starts right under the header.
- * `levels` must not be empty.
+ * `head` is the page title. The play area (board, tiles, program, buttons) is sized to fit one
+ * screen, so you never scroll between the tiles and the board. `levels` must not be empty.
  */
 export function CodingBoard({ head, levels }: { head: ReactNode; levels: SiteLevel[] }) {
   const [mi, setMi] = useState(0);
@@ -262,7 +263,9 @@ export function CodingBoard({ head, levels }: { head: ReactNode; levels: SiteLev
       if (!reduce && !(await frames(id, 600, (k) => paint(end, Math.sin(k * Math.PI * 6) * 14 * (1 - k))))) return;
     } else {
       setActive(null);
-      setToast(r.outcome);
+      // Ended off the star but stood on it on the way: tell the child they went too far.
+      const passed = r.outcome === "incomplete" && r.steps.some((s) => s.pose.x === mission.target_x && s.pose.y === mission.target_y);
+      setToast(passed ? "passed" : r.outcome);
       if (r.outcome === "success" && !reduce) {
         const at = burst(mission.target_x, mission.target_y);
         const ok = await frames(id, 1400, (k) => paint(end, 0, at(k)));
@@ -285,81 +288,83 @@ export function CodingBoard({ head, levels }: { head: ReactNode; levels: SiteLev
   return (
     <div className="cb">
       <div className="cb-head">{head}</div>
-        <div className="board-frame cb-board">
-          <canvas
-            ref={canvas}
-            width={PX}
-            height={PX}
-            role="img"
-            aria-label={`Papan ${SIZE}×${SIZE}: pion di kolom ${mission.start_x + 1} baris ${mission.start_y + 1}, bintang di kolom ${mission.target_x + 1} baris ${mission.target_y + 1}, ${mission.obstacles.length} rintangan.`}
-          />
-          <p className="cb-toast" role="status" style={{ background: `var(${toast ? TOAST[toast].bg : "--cream"})` }}>
-            {toast ? TOAST[toast].text : running ? "Program berjalan…" : "Susun program, lalu tekan Jalankan Program."}
-          </p>
+      <div className="board-frame cb-board">
+        <canvas
+          ref={canvas}
+          width={PX}
+          height={PX}
+          role="img"
+          aria-label={`Papan ${SIZE}×${SIZE}: pion di kolom ${mission.start_x + 1} baris ${mission.start_y + 1}, bintang di kolom ${mission.target_x + 1} baris ${mission.target_y + 1}, ${mission.obstacles.length} rintangan.`}
+        />
+        <p className="cb-toast" role="status" style={{ background: `var(${toast ? TOAST[toast].bg : "--cream"})` }}>
+          {toast ? TOAST[toast].text : running ? "Program berjalan…" : "Susun program, lalu tekan Jalankan Program."}
+        </p>
+      </div>
+
+      <div className="cb-pick">
+        <div className="cb-missions" role="group" aria-label="Pilih misi">
+          {levels.map((m, k) => (
+            <button key={m.id} type="button" className="cb-mission" aria-pressed={k === mi} aria-label={`Misi ${k + 1}: ${m.title}`} onClick={() => pickMission(k)}>
+              {k + 1}
+            </button>
+          ))}
+        </div>
+        <div className="cb-brief">
+          <span className="chip" style={{ background: `var(--${mission.color})` }}>
+            {mission.edition_name}
+          </span>
+          <h2 className="card-title">
+            Misi {mi + 1}: {mission.title}
+          </h2>
+          <p className="muted">{mission.hint}</p>
+        </div>
+      </div>
+
+      <div className="cb-tools">
+        <div className="cb-palette" role="group" aria-label="Perintah">
+          {CMDS.map((c) => (
+            <button key={c.k} type="button" className="cb-cmd" disabled={full} onClick={() => add(c.k)}>
+              <span className="cb-tile" style={{ background: `var(${c.color})` }}>
+                <TileIcon k={c.k} />
+              </span>
+              <span>{c.label}</span>
+            </button>
+          ))}
         </div>
 
-        <div className="cb-side">
-          <div className="cb-missions" role="group" aria-label="Pilih misi">
-            {levels.map((m, k) => (
-              <button key={m.id} type="button" className="cb-mission" aria-pressed={k === mi} aria-label={`Misi ${k + 1}: ${m.title}`} onClick={() => pickMission(k)}>
-                {k + 1}
-              </button>
-            ))}
-          </div>
-          <div className="cb-brief">
-            <span className="chip" style={{ background: `var(--${mission.color})` }}>
-              {mission.edition_name}
-            </span>
-            <h2 className="card-title">
-              Misi {mi + 1}: {mission.title}
-            </h2>
-            <p className="muted">{mission.hint}</p>
-          </div>
-
-          <div className="cb-palette" role="group" aria-label="Perintah">
-            {CMDS.map((c) => (
-              <button key={c.k} type="button" className="cb-cmd" disabled={full} onClick={() => add(c.k)}>
-                <span className="cb-tile" style={{ background: `var(${c.color})` }}>
-                  <TileIcon k={c.k} />
-                </span>
-                <span>{c.label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div ref={strip} className="cb-strip" role="group" aria-label="Program">
-            {program.length === 0 && <span className="muted">Ketuk perintah di atas untuk menyusun program.</span>}
-            {program.map((c, i) => (
-              <button
-                key={i}
-                type="button"
-                data-tile={i}
-                className={"cb-tile cb-tile-sm" + (active === i ? " is-active" : "")}
-                style={{ background: `var(${CMD[c].color})` }}
-                aria-label={`Hapus ${CMD[c].label}`}
-                onClick={() => remove(i)}
-                onKeyDown={onTileKey(i)}
-              >
-                <TileIcon k={c} />
-              </button>
-            ))}
-          </div>
-          <p className="field-hint" style={{ margin: 0 }}>
-            {full ? `Maksimal ${MAX_TILES} keping. ` : ""}Ketuk keping di program untuk menghapus. Keyboard: panah kiri/kanan untuk memindah.
-          </p>
-
-          <div className="cb-controls">
-            <button type="button" className="btn btn-primary" disabled={running || program.length === 0} onClick={play}>
-              Jalankan Program
+        <div ref={strip} className="cb-strip" role="group" aria-label="Program">
+          {program.length === 0 && <span className="muted">Ketuk perintah di atas untuk menyusun program.</span>}
+          {program.map((c, i) => (
+            <button
+              key={i}
+              type="button"
+              data-tile={i}
+              className={"cb-tile cb-tile-sm" + (active === i ? " is-active" : "")}
+              style={{ background: `var(${CMD[c].color})` }}
+              aria-label={`Hapus ${CMD[c].label}`}
+              onClick={() => remove(i)}
+              onKeyDown={onTileKey(i)}
+            >
+              <TileIcon k={c} />
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => edit([])}>
-              Reset
-            </button>
-            <button type="button" className="icon-btn cb-speed" aria-pressed={fast} aria-label={fast ? "Kecepatan: cepat" : "Kecepatan: normal"} onClick={() => setFast(!fast)}>
-              {fast ? "2×" : "1×"}
-            </button>
-          </div>
+          ))}
         </div>
+        <p className="field-hint cb-hint">
+          {full ? `Maksimal ${MAX_TILES} keping. ` : ""}Ketuk keping di program untuk menghapus. Keyboard: panah kiri/kanan untuk memindah.
+        </p>
+
+        <div className="cb-controls">
+          <button type="button" className="btn btn-primary" disabled={running || program.length === 0} onClick={play}>
+            Jalankan Program
+          </button>
+          <button type="button" className="btn btn-secondary" onClick={() => edit([])}>
+            Reset
+          </button>
+          <button type="button" className="icon-btn cb-speed" aria-pressed={fast} aria-label={fast ? "Kecepatan: cepat" : "Kecepatan: normal"} onClick={() => setFast(!fast)}>
+            {fast ? "2×" : "1×"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
