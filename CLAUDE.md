@@ -25,29 +25,31 @@ This is a small project: a few teachers, one or two admins, around 50 requests a
 ## Commands
 
 ```sh
-# web/
+docker compose up -d db  # (repo root) Postgres 16 on localhost:5432
+# web/  (first time: cp .env.example .env.local)
 bun install
+bun run db:migrate       # applies drizzle/*.sql (lib/db/migrate.ts)
+bun run db:seed          # editions + starter levels, only into an empty database (lib/seed.ts)
+bun run db:generate      # after editing lib/db/schema.ts: writes a new SQL file to commit
 bun dev                  # :3000
 bun test                 # lib/board.test.ts
 bun run lint
-bun run build            # catches type/prerender errors `bun dev` hides
-docker compose up --build  # (repo root) site in a container on :3000
+bun run build            # needs the database (pages prerender from it); catches errors `bun dev` hides
+docker compose up --build  # (repo root) db + site in a container on :3000; migrates, seeds, builds on start
 ```
 
-Database commands (`docker compose up -d db`, `bun run db:migrate`, `bun run db:seed`) arrive with task 18; update this section then.
-
-CI (`.github/workflows/ci.yml`) runs exactly: `bun install --frozen-lockfile && bun test && bun run lint && bun run build`. From task 18 it also starts Postgres and runs migrate + seed before the build, because pages prerender from the database.
+CI (`.github/workflows/ci.yml`) starts a Postgres 16 service and runs exactly: `bun install --frozen-lockfile && bun test && bun run lint && bun run db:migrate && bun run db:seed && bun run build`.
 
 ## Architecture
 
 - **One Next app** serves the public site, `/admin`, and the API. Server logic lives only in route handlers under `web/app/api/`. Public pages stay prerendered and are regenerated when an admin saves.
-- **Today's data** is still in constants: editions in `web/lib/products.ts`, levels in `MISSIONS` in `web/lib/board.ts`. Task 18 moves both into Postgres and deletes the constants.
-- **Board rules** (same as the physical toy): 6×6 grid, four tiles (atas, bawah, kiri, kanan), at most 18 tiles, no loop tile. `web/lib/board.ts` is pure TypeScript with `run()` and `solve()` (BFS shortest program), tested in `board.test.ts`. The admin editor, the virtual board and the API all use it; `components/coding-board.tsx` only animates its steps on a canvas.
+- **Data** lives in Postgres via Drizzle: tables in `web/lib/db/schema.ts` (TS keys = snake_case column names), SQL migrations in `web/drizzle/`. Public pages read through the `"use cache"` functions in `web/lib/db/site.ts` (tags `editions`, `levels`), so they prerender at build; admin saves must expire those tags.
+- **Board rules** (same as the physical toy): 6×6 grid, four tiles (atas, bawah, kiri, kanan), at most 18 tiles, no loop tile. `web/lib/board.ts` is pure TypeScript with `run()` and `solve()` (BFS shortest program), tested in `board.test.ts`; both take a level row's columns (`start_x`, `target_y`, `obstacles`, …) directly. The admin editor, the virtual board and the API all use it; `components/coding-board.tsx` only animates its steps on a canvas.
 - **The server grades attempts.** The app sends only the program; the server runs `run()` and stores the verdict. See PLAN.md "Business rules" for level locking, ownership (404 for others' data) and admin roles.
 - **Buy buttons** are plain `<a target="_blank" rel="noopener noreferrer">` links to Shopee; price, payment and shipping happen there.
 - **Next.js version is newer than training data** (Next 16 / React 19, see `web/AGENTS.md`). Read the relevant guide in `web/node_modules/next/dist/docs/` before writing Next code and heed deprecations. `next dev` re-adds the AGENTS.md block, so commit it rather than removing it.
 - **Motion:** `web/components/motion.tsx` holds the preloader (also the page-transition curtain for internal links), the scroll reveal (`data-reveal`) and scroll scenes (`data-scroll` → `--in/--out/--p`). Everything must stay visible without JS and switch off under `prefers-reduced-motion`.
-- **Styling:** plain CSS with design tokens as CSS variables in `web/app/globals.css` plus inline `style` props. No Tailwind or UI library, in the admin too. White base, brand colors as accents; Unbounded (headings) + Lexend (body) from `next/font/google` in `layout.tsx`. Things you can touch (board, tiles, buttons) get an ink edge and a hard bottom shadow; information stays flat. Use the `-deep` color shades for colored text; never put white text on brand colors. `--blue` was added for Set Samudra (edition colors live in `EDITION_COLOR` until task 18 moves them to `editions.color`). The 2026-11-05 redesign supersedes DESIGN.md's cream base, fonts and all-caps labels.
+- **Styling:** plain CSS with design tokens as CSS variables in `web/app/globals.css` plus inline `style` props. No Tailwind or UI library, in the admin too. White base, brand colors as accents; Unbounded (headings) + Lexend (body) from `next/font/google` in `layout.tsx`. Things you can touch (board, tiles, buttons) get an ink edge and a hard bottom shadow; information stays flat. Use the `-deep` color shades for colored text; never put white text on brand colors. `--blue` was added for Set Samudra. An edition's color is `editions.color`, a token name used as `var(--${color})`. The 2026-11-05 redesign supersedes DESIGN.md's cream base, fonts and all-caps labels.
 - **Secrets** live in `web/.env.local` locally and in Vercel's environment variables in production. Never commit them or paste them into chat.
 
 ## Workflow rules
@@ -62,7 +64,7 @@ CI (`.github/workflows/ci.yml`) runs exactly: `bun install --frozen-lockfile && 
 
 **Remind the user of this whole checklist whenever they talk about deploying, pushing to prod/staging, setting up Vercel or Neon, or starting task 14.** Tick items off here as they're done; delete the section when it's empty.
 
-- [ ] **Shopee:** real store/listing URLs (a placeholder in `web/lib/products.ts` today; an admin field after task 20).
+- [ ] **Shopee:** real store URL (`SHOPEE_URL` placeholder in `web/lib/products.ts`) and listing URLs (`editions.shopee_url`, seeded with the placeholder; editable in the admin after task 20).
 - [ ] **Vercel project:** root directory `web`, build command `bun run db:migrate && bun run build`, functions region `sin1`.
 - [ ] **Neon:** added from Vercel Storage, region Singapore, pooled connection string.
 - [ ] **Env vars** set in Vercel: `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and the Blob, SMTP and Google ones once those tasks are done.
