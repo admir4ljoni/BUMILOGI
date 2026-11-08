@@ -23,8 +23,21 @@ const same = (a: Cell, b: Cell) => a[0] === b[0] && a[1] === b[1];
 /**
  * `level` is the level being edited (null for a new one); `template` prefills a new level (a copy).
  * `locked`: children already played it, so only the text fields, date and toggles can change.
+ * `today` (YYYY-MM-DD, Indonesian time) is the suggested publish date.
  */
-export function LevelForm({ level, template, editions, locked }: { level: Level | null; template: Draft; editions: Pick<Edition, "id" | "name" | "color">[]; locked: boolean }) {
+export function LevelForm({
+  level,
+  template,
+  editions,
+  locked,
+  today,
+}: {
+  level: Level | null;
+  template: Draft;
+  editions: Pick<Edition, "id" | "name" | "color">[];
+  locked: boolean;
+  today: string;
+}) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [start, setStart] = useState<Cell>([template.start_x, template.start_y]);
@@ -32,6 +45,7 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
   const [obstacles, setObstacles] = useState<Cell[]>(template.obstacles);
   const [editionId, setEditionId] = useState(template.edition_id);
   const [tool, setTool] = useState<Piece>("obstacle");
+  const [publish, setPublish] = useState(template.published_at !== null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dragging = useRef<{ piece: Piece; from: Cell | null } | null>(null);
@@ -89,7 +103,7 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
     }
   }
 
-  async function send(method: string, url: string, body?: object) {
+  async function send(method: string, url: string, message: string, body?: object) {
     setSaving(true);
     setError(null);
     const response = await fetch(url, { method, headers: { "content-type": "application/json" }, body: body && JSON.stringify(body) }).catch(() => null);
@@ -101,8 +115,9 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
         setTarget([template.target_x, template.target_y]);
         setObstacles(template.obstacles);
         setEditionId(template.edition_id);
+        setPublish(template.published_at !== null);
       }
-      router.push("/admin/level");
+      router.push(`/admin/level?pesan=${message}`);
       router.refresh();
     } else {
       const data = await response?.json().catch(() => null);
@@ -123,16 +138,16 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
       target_x: target[0],
       target_y: target[1],
       obstacles,
-      published_at: form.get("published_at") || null,
+      published_at: publish ? form.get("published_at") : null,
       on_site: form.get("on_site") === "on",
       sort_order: Number(form.get("sort_order")),
     };
-    if (level) send("PUT", `/api/v1/levels/${level.id}`, body);
-    else send("POST", "/api/v1/levels", body);
+    if (level) send("PUT", `/api/v1/levels/${level.id}`, "disimpan", body);
+    else send("POST", "/api/v1/levels", "disimpan", body);
   }
 
   function onDelete() {
-    if (level && confirm(`Hapus level "${level.title}"? Tindakan ini tidak bisa dibatalkan.`)) send("DELETE", `/api/v1/levels/${level.id}`);
+    if (level && confirm(`Hapus level "${level.title}"? Tindakan ini tidak bisa dibatalkan.`)) send("DELETE", `/api/v1/levels/${level.id}`, "dihapus");
   }
 
   const status = !solution
@@ -143,12 +158,12 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
   const solvable = solution !== null && solution.length <= MAX_TILES;
 
   return (
-    <form ref={formRef} onSubmit={onSubmit} className="admin-form level-form">
-      <div className="level-editor">
-        <div>
-          {locked ? (
-            <p className="level-note">Level ini sudah dimainkan anak, jadi papannya terkunci. Salin level untuk membuat versi baru.</p>
-          ) : (
+    <form ref={formRef} onSubmit={onSubmit} className="editor level-layout">
+      <div className="editor-board">
+        {locked ? (
+          <p className="level-note">Level ini sudah dimainkan anak, jadi papannya terkunci. Judul, petunjuk, dan penerbitan masih bisa diubah. Untuk papan yang berbeda, salin level ini.</p>
+        ) : (
+          <div className="level-toolbar">
             <div className="level-pieces" role="group" aria-label="Pilih yang mau diletakkan">
               {PIECES.map((p) => (
                 <button
@@ -166,49 +181,52 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
                 </button>
               ))}
             </div>
-          )}
-          <div className="board-frame level-board" role="grid" aria-label={`Papan ${SIZE}×${SIZE}`} aria-disabled={locked}>
-            {Array.from({ length: SIZE }, (_, y) => (
-              <div key={y} role="row" className="level-row">
-                {Array.from({ length: SIZE }, (_, x) => {
-                  const cell: Cell = [x, y];
-                  const piece = pieceAt(cell);
-                  const step = route.get(`${x},${y}`);
-                  const label = piece === "start" ? "mulai" : piece === "target" ? "bintang" : piece === "obstacle" ? "rintangan" : step ? `langkah ${step}` : "kosong";
-                  return (
-                    <button
-                      key={x}
-                      type="button"
-                      role="gridcell"
-                      className={"level-cell" + (step && piece !== "target" ? " is-route" : "")}
-                      aria-label={`Kolom ${x + 1}, baris ${y + 1}: ${label}`}
-                      disabled={locked}
-                      draggable={!locked && piece !== null}
-                      onDragStart={(e) => piece && onDragStart(e, piece, cell)}
-                      onDragEnd={onDragEnd}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (dragging.current) place(dragging.current.piece, cell, dragging.current.from);
-                      }}
-                      onClick={() => place(tool, cell, null)}
-                    >
-                      {piece ? (
-                        <span className={`level-token is-${piece}`} style={piece === "start" ? { background: `var(--${color})` } : undefined} />
-                      ) : (
-                        step && <span className="level-step">{step}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+            <button type="button" className="btn btn-sm" onClick={() => setObstacles([])} disabled={obstacles.length === 0}>
+              Hapus semua rintangan
+            </button>
           </div>
-          {!locked && <p className="field-hint">Seret Mulai, Bintang, atau Rintangan ke papan, atau pilih lalu ketuk kotaknya. Ketuk rintangan atau seret keluar papan untuk menghapusnya.</p>}
+        )}
+        <div className="board-frame level-board" role="grid" aria-label={`Papan ${SIZE}×${SIZE}`} aria-disabled={locked}>
+          {Array.from({ length: SIZE }, (_, y) => (
+            <div key={y} role="row" className="level-row">
+              {Array.from({ length: SIZE }, (_, x) => {
+                const cell: Cell = [x, y];
+                const piece = pieceAt(cell);
+                const step = route.get(`${x},${y}`);
+                const label = piece === "start" ? "mulai" : piece === "target" ? "bintang" : piece === "obstacle" ? "rintangan" : step ? `langkah ${step}` : "kosong";
+                return (
+                  <button
+                    key={x}
+                    type="button"
+                    role="gridcell"
+                    className={"level-cell" + (step && piece !== "target" ? " is-route" : "")}
+                    aria-label={`Kolom ${x + 1}, baris ${y + 1}: ${label}`}
+                    disabled={locked}
+                    draggable={!locked && piece !== null}
+                    onDragStart={(e) => piece && onDragStart(e, piece, cell)}
+                    onDragEnd={onDragEnd}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragging.current) place(dragging.current.piece, cell, dragging.current.from);
+                    }}
+                    onClick={() => place(tool, cell, null)}
+                  >
+                    {piece ? (
+                      <span className={`level-token is-${piece}`} style={piece === "start" ? { background: `var(--${color})` } : undefined} />
+                    ) : (
+                      step && <span className="level-step">{step}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </div>
+        {!locked && <p className="field-hint">Seret Mulai, Bintang, atau Rintangan ke papan, atau pilih lalu ketuk kotaknya. Ketuk rintangan atau seret keluar papan untuk menghapusnya.</p>}
 
-        <div className="level-solution" role="status">
-          <p className={solvable ? "level-ok" : "form-error"}>{status}</p>
+        <div className={"level-solution" + (solvable ? "" : " is-bad")} role="status">
+          <p>{status}</p>
           {solvable && (
             <div className="cb-strip" aria-label="Jalan terpendek">
               {solution.map((cmd, i) => (
@@ -221,58 +239,85 @@ export function LevelForm({ level, template, editions, locked }: { level: Level 
         </div>
       </div>
 
-      <label className="field">
-        Edisi
-        <select value={editionId} onChange={(e) => setEditionId(Number(e.target.value))}>
-          {editions.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="field">
-        Judul
-        <input name="title" defaultValue={template.title} maxLength={80} required />
-      </label>
-      <label className="field">
-        Petunjuk
-        <textarea name="hint" defaultValue={template.hint} rows={2} maxLength={200} required />
-      </label>
-      <label className="field">
-        Tanggal terbit
-        <input name="published_at" type="date" defaultValue={template.published_at ?? ""} />
-        <span className="field-hint">Kosongkan untuk draf. Guru melihat level mulai tanggal ini.</span>
-      </label>
-      <label className="check">
-        <input name="on_site" type="checkbox" defaultChecked={template.on_site} />
-        Tampilkan di papan koding situs
-      </label>
-      <label className="field">
-        Urutan
-        <input name="sort_order" type="number" step={1} defaultValue={template.sort_order} required />
-        <span className="field-hint">Angka kecil tampil lebih dulu.</span>
-      </label>
+      <div className="editor-fields">
+        <fieldset className="admin-section">
+          <legend>Tentang level</legend>
+          <div className="field">
+            <span id="edition-label">Edisi</span>
+            <div className="swatches" role="radiogroup" aria-labelledby="edition-label">
+              {editions.map((e) => (
+                <label key={e.id} className="swatch">
+                  <input type="radio" name="edition" checked={editionId === e.id} onChange={() => setEditionId(e.id)} className="sr-only" />
+                  <span className="swatch-dot" style={{ background: `var(--${e.color})` }} />
+                  {e.name}
+                </label>
+              ))}
+            </div>
+          </div>
+          <label className="field">
+            Judul
+            <input name="title" defaultValue={template.title} maxLength={80} placeholder="Ke kanan menuju bintang" required />
+          </label>
+          <label className="field">
+            Petunjuk untuk guru dan anak
+            <textarea name="hint" defaultValue={template.hint} rows={3} maxLength={200} required />
+          </label>
+        </fieldset>
 
-      {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="actions">
-        <button type="submit" className="btn btn-primary" disabled={saving || !solvable}>
-          {saving ? "Menyimpan…" : "Simpan"}
-        </button>
-        {level && (
-          <Link href={`/admin/level/baru?salin=${level.id}`} className="btn">
-            Salin level
-          </Link>
-        )}
-        {level && !locked && (
-          <button type="button" className="btn" onClick={onDelete} disabled={saving}>
-            Hapus level
+        <fieldset className="admin-section">
+          <legend>Penerbitan</legend>
+          <div className="field">
+            <span id="publish-label">Untuk guru di aplikasi</span>
+            <div className="choice-list" role="radiogroup" aria-labelledby="publish-label">
+              <label className="check">
+                <input type="radio" name="publish" checked={!publish} onChange={() => setPublish(false)} />
+                Draf, belum terlihat guru
+              </label>
+              <label className="check">
+                <input type="radio" name="publish" checked={publish} onChange={() => setPublish(true)} />
+                Terbit mulai tanggal
+              </label>
+              <input
+                name="published_at"
+                type="date"
+                className="choice-date"
+                defaultValue={template.published_at ?? today}
+                disabled={!publish}
+                required
+                aria-label="Tanggal terbit"
+              />
+            </div>
+            <span className="field-hint">Pilih tanggal nanti untuk menjadwalkan level mingguan.</span>
+          </div>
+          <label className="check">
+            <input name="on_site" type="checkbox" defaultChecked={template.on_site} />
+            Tampilkan di papan koding situs (untuk semua pengunjung)
+          </label>
+          <label className="field">
+            Urutan
+            <input name="sort_order" type="number" step={1} defaultValue={template.sort_order} required />
+            <span className="field-hint">Angka kecil tampil lebih dulu, di daftar ini dan di papan koding situs.</span>
+          </label>
+        </fieldset>
+
+        <div className="editor-actions">
+          {error && (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button type="submit" className="btn btn-primary" disabled={saving || !solvable}>
+            {saving ? "Menyimpan…" : level ? "Simpan perubahan" : "Tambah level"}
           </button>
-        )}
+          <Link href="/admin/level" className="btn">
+            Batal
+          </Link>
+          {level && !locked && (
+            <button type="button" className="btn btn-danger" onClick={onDelete} disabled={saving}>
+              Hapus level
+            </button>
+          )}
+        </div>
       </div>
     </form>
   );

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireAdminPage } from "@/lib/auth";
 import { EditionForm } from "../edition-form";
 
@@ -9,7 +10,12 @@ export default async function NewEditionPage() {
   await requireAdminPage();
   return (
     <>
-      <h1>Tambah edisi</h1>
+      <div>
+        <Link href="/admin/edisi" className="admin-back">
+          ← Semua edisi
+        </Link>
+        <h1>Tambah edisi</h1>
+      </div>
       <EditionForm edition={null} />
     </>
   );
