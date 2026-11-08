@@ -850,9 +850,11 @@ button {
 }
 .admin-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-lg);
+  gap: var(--s-sm) var(--s-lg);
   min-height: 64px;
+  padding-block: var(--s-sm);
   font-weight: 600;
 }
 .admin-nav > :first-child {
@@ -898,6 +900,125 @@ button {
   width: 240px;
   height: auto;
   border-radius: var(--r-md);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--s-sm);
+  font-weight: 600;
+}
+.check input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--ink);
+}
+.level-editor {
+  display: grid;
+  gap: var(--s-md);
+}
+.level-editor > div:first-child {
+  display: grid;
+  gap: var(--s-md);
+}
+.level-pieces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-sm);
+}
+.level-piece {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-sm);
+  padding: 8px 14px;
+  border: var(--edge);
+  border-radius: var(--r-full);
+  background: var(--white);
+  color: var(--ink);
+  font: 600 15px/1 var(--font-body);
+  box-shadow: var(--lift);
+  cursor: grab;
+}
+.level-piece[aria-pressed="true"] {
+  background: var(--yellow);
+}
+.level-board {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 480px;
+}
+.level-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.level-cell {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream);
+  color: var(--ink);
+  cursor: pointer;
+}
+.level-cell.is-route {
+  background: color-mix(in srgb, var(--yellow) 40%, var(--white));
+  border-color: var(--yellow-deep);
+}
+.level-cell:disabled {
+  cursor: not-allowed;
+}
+.level-step {
+  font: 700 15px/1 var(--font-display);
+  color: var(--yellow-deep);
+}
+.level-cell.is-route .level-step {
+  color: var(--ink);
+}
+/* Pieces: the pawn is a circle in the edition color, the target a star, an obstacle a sand block. */
+.level-token {
+  display: block;
+  width: 70%;
+  aspect-ratio: 1;
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-full);
+}
+.level-token.is-target {
+  border: 0;
+  background: var(--ink);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.level-cell:has(.is-target) {
+  background: var(--yellow);
+}
+.level-token.is-obstacle {
+  width: 84%;
+  border-radius: 8px;
+  background: var(--sand);
+  box-shadow: 0 4px 0 rgba(43, 38, 34, 0.35);
+}
+.level-piece .level-token {
+  width: 20px;
+  box-shadow: none;
+}
+.level-solution {
+  display: grid;
+  gap: var(--s-sm);
+}
+.level-solution p {
+  margin: 0;
+}
+.level-ok {
+  font-weight: 600;
+}
+.level-note {
+  margin: 0;
+  padding: 12px var(--s-md);
+  border-radius: var(--r-md);
+  background: var(--sand);
+  font-weight: 600;
 }
 .form-error {
   margin: 0;

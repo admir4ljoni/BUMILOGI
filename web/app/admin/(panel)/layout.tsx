@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             <Logo />
           </Link>
           <Link href="/admin/edisi">Edisi</Link>
+          <Link href="/admin/level">Level</Link>
           <a href="/" target="_blank" rel="noopener noreferrer">
             Lihat situs
           </a>
