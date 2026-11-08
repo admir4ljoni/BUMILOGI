@@ -65,6 +65,8 @@ export function parseEdition(body: unknown): Result {
   const shopee = httpsUrl(b.shopee_url);
   if (!shopee) return { data: null, error: "Link Shopee harus alamat https:// yang lengkap." };
 
+  if (typeof b.buy_enabled !== "boolean") return { data: null, error: "Pilih apakah tombol Beli aktif." };
+
   let image_url: string | null = null;
   if (b.image_url !== null && b.image_url !== undefined) {
     const image = httpsUrl(b.image_url);
@@ -79,7 +81,7 @@ export function parseEdition(body: unknown): Result {
     return { data: null, error: "Urutan harus angka bulat." };
 
   return {
-    data: { slug, name, tagline, description, contents, animals, price_idr: price, shopee_url: shopee.href, image_url, color: b.color, sort_order: sort },
+    data: { slug, name, tagline, description, contents, animals, price_idr: price, shopee_url: shopee.href, buy_enabled: b.buy_enabled, image_url, color: b.color, sort_order: sort },
     error: null,
   };
 }

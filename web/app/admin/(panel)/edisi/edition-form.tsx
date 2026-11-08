@@ -11,7 +11,7 @@ import { EditionPicture } from "./edition-picture";
 
 type Draft = Omit<Edition, "id" | "image_url" | "created_at" | "updated_at">;
 
-const EMPTY: Draft = { name: "", slug: "", tagline: "", description: "", contents: [], animals: [], price_idr: 0, shopee_url: "", color: "green", sort_order: 0 };
+const EMPTY: Draft = { name: "", slug: "", tagline: "", description: "", contents: [], animals: [], price_idr: 0, shopee_url: "", buy_enabled: true, color: "green", sort_order: 0 };
 
 const lines = (text: FormDataEntryValue | null) =>
   String(text ?? "")
@@ -41,6 +41,7 @@ function readForm(form: HTMLFormElement): Draft {
     animals: lines(data.get("animals")),
     price_idr: Number(data.get("price_idr")),
     shopee_url: String(data.get("shopee_url") ?? ""),
+    buy_enabled: data.get("buy_enabled") === "on",
     color: String(data.get("color") ?? "green"),
     sort_order: Number(data.get("sort_order")),
   };
@@ -224,6 +225,11 @@ export function EditionForm({ edition }: { edition: Edition | null }) {
             Link Shopee
             <input name="shopee_url" type="url" defaultValue={initial.shopee_url} placeholder="https://shopee.co.id/..." required />
           </label>
+          <label className="check">
+            <input name="buy_enabled" type="checkbox" defaultChecked={initial.buy_enabled} />
+            Tombol Beli aktif
+          </label>
+          <span className="field-hint">Matikan selama produk belum dijual: halaman produk menampilkan “Segera Hadir”.</span>
         </fieldset>
 
         <div className="editor-actions">
@@ -268,7 +274,7 @@ function EditionPreview({ draft, imageUrl }: { draft: Draft; imageUrl: string | 
         <h2>{draft.name || "Nama edisi"}</h2>
         <p className="preview-text">{draft.description || "Deskripsi edisi tampil di sini."}</p>
         <p className="preview-price">{draft.price_idr > 0 ? formatIDR(draft.price_idr) : "Rp —"}</p>
-        <span className="btn btn-primary btn-sm">Beli Sekarang</span>
+        <span className="btn btn-primary btn-sm">{draft.buy_enabled ? "Beli Sekarang" : "Segera Hadir"}</span>
         <h3>Isi set</h3>
         <ul className="checks">
           {(draft.contents.length ? draft.contents : ["Isi set tampil di sini"]).map((item, i) => (

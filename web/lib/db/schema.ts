@@ -25,6 +25,7 @@ export const editions = pgTable(
     animals: text().array().notNull(),
     price_idr: integer().notNull(),
     shopee_url: text().notNull(),
+    buy_enabled: boolean().notNull().default(true), // false: the product page says "Segera Hadir" instead of linking to Shopee
     image_url: text(),
     color: text().notNull(), // a palette token name from globals.css, e.g. 'green', 'blue'
     sort_order: integer().notNull().default(0),

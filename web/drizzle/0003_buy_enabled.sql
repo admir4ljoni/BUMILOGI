@@ -1,0 +1,1 @@
+ALTER TABLE "editions" ADD COLUMN "buy_enabled" boolean DEFAULT true NOT NULL;
