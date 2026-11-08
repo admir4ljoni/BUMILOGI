@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { Suspense, type CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import { Glyph } from "@/components/glyph";
-import { getEditions } from "@/lib/db/site";
+import { getEdition, getEditions } from "@/lib/db/site";
 import { formatIDR } from "@/lib/products";
 
 export async function generateStaticParams() {
@@ -13,7 +14,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps<"/produk/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const p = (await getEditions()).find((x) => x.slug === slug);
+  const p = await getEdition(slug);
   return { title: p ? `${p.name} — BUMILOGI` : "Produk — BUMILOGI", description: p?.description };
 }
 
@@ -23,13 +24,22 @@ const PERKS = [
   { title: "Tanpa layar", text: "Belajar logika lewat tangan" },
 ];
 
-export default async function ProductPage({ params }: PageProps<"/produk/[slug]">) {
+// The slug is read inside <Suspense>: an edition added after the build has no prerendered page,
+// so its first visit gets the route's shell and the content streams in (and after an admin save).
+export default function ProductPage({ params }: PageProps<"/produk/[slug]">) {
+  return (
+    <Suspense fallback={<div className="container product" style={{ minHeight: "100vh" }} />}>
+      <Product params={params} />
+    </Suspense>
+  );
+}
+
+async function Product({ params }: Pick<PageProps<"/produk/[slug]">, "params">) {
   const { slug } = await params;
-  const editions = await getEditions();
-  const p = editions.find((x) => x.slug === slug);
+  const p = await getEdition(slug);
   if (!p) notFound();
   const color = `--${p.color}`;
-  const other = editions.find((x) => x.slug !== p.slug);
+  const other = (await getEditions()).find((x) => x.slug !== p.slug);
 
   return (
     <div className="container product">
@@ -43,11 +53,17 @@ export default async function ProductPage({ params }: PageProps<"/produk/[slug]"
 
       <div className="product-top">
         <div className="product-visual" style={{ background: `var(${color})` }}>
-          <svg className="product-glyph" viewBox="-32 -32 64 64" width="40%" aria-hidden="true">
-            <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
-            <Glyph k="kanan" />
-          </svg>
-          <span>Foto produk segera hadir</span>
+          {p.image_url ? (
+            <Image src={p.image_url} alt={p.name} fill sizes="(min-width: 900px) 50vw, 100vw" className="product-image" preload />
+          ) : (
+            <>
+              <svg className="product-glyph" viewBox="-32 -32 64 64" width="40%" aria-hidden="true">
+                <rect x={-28} y={-28} width={56} height={56} rx={14} fill="var(--white)" stroke="var(--ink)" strokeWidth={3} />
+                <Glyph k="kanan" />
+              </svg>
+              <span>Foto produk segera hadir</span>
+            </>
+          )}
         </div>
 
         <div className="product-info">

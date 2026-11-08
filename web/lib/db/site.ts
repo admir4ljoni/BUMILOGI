@@ -12,6 +12,14 @@ export async function getEditions() {
   return db.select().from(editions).orderBy(asc(editions.sort_order), asc(editions.id));
 }
 
+export async function getEdition(slug: string) {
+  "use cache";
+  cacheLife("max");
+  cacheTag("editions");
+  const [edition] = await db.select().from(editions).where(eq(editions.slug, slug));
+  return edition ?? null;
+}
+
 /** Levels shown on the virtual board, with their edition's name and color for the pawn and chip. */
 export async function getSiteLevels() {
   "use cache";
