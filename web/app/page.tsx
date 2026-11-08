@@ -8,7 +8,7 @@ import { EDITION_COLOR, PRODUCTS, SHOPEE_URL, formatIDR } from "@/lib/products";
 const HOW = [
   {
     title: "Susun keping perintah",
-    text: "Anak memilih keping arah (atas, bawah, kiri, kanan) atau Ulangi, lalu menjajarkannya menjadi program.",
+    text: "Anak memutar keping panah ke atas, bawah, kiri, atau kanan, lalu menjajarkannya menjadi program.",
   },
   {
     title: "Jalankan tokoh satwa",

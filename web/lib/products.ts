@@ -26,7 +26,7 @@ export const PRODUCTS: Product[] = [
       "Pandu badak jawa dan orangutan menyusuri hutan hujan, satu perintah demi satu perintah. Anak menyusun keping perintah, lalu menjalankan tokoh satwa di papan untuk mencapai bintang.",
     contents: [
       "Papan koding 6×6",
-      "24 keping perintah (atas, bawah, kiri, kanan, ulangi)",
+      "26 keping panah (diputar untuk atas, bawah, kiri, kanan)",
       "3 tokoh satwa Rimba",
       "12 kartu misi bertingkat",
       "Panduan bermain untuk guru & orang tua",
@@ -44,7 +44,7 @@ export const PRODUCTS: Product[] = [
       "Arahkan ikan badut menjelajahi terumbu karang tanpa menabrak karang. Setiap misi melatih anak memecah masalah menjadi langkah-langkah kecil yang runtut.",
     contents: [
       "Papan koding 6×6",
-      "24 keping perintah (atas, bawah, kiri, kanan, ulangi)",
+      "26 keping panah (diputar untuk atas, bawah, kiri, kanan)",
       "3 tokoh satwa Samudra",
       "12 kartu misi bertingkat",
       "Panduan bermain untuk guru & orang tua",
